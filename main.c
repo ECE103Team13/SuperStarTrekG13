@@ -4,68 +4,43 @@
 #include <string.h>
 #include <ctype.h>
 
-struct Galaxy() {
-    char coordinates[8][8][8][8];
-    struct starbase starbases[10];
-    struct klingon klingons[10];
-};
+// enum declarations:
+typedef enum {GREEN, YELLOW, RED} Condition;
 
-struct Starbase() {
+//struct declarations:
+struct Starbase {
     int position[4];
     double damage;
     double energy;
     double shields;
 };
 
-struct Klingon() {
+struct Klingon {
     int position[4];
     double damage;
     double energy;
     double shields;
 };
 
-struct Enterprise() {
+struct Enterprise {
     int position[4];
     double damage;
     double energy;
     double shields;
     int torpedoes;
+    Condition condition;
 };
 
-struct Galaxy createGalaxy() {
-    struct Galaxy _galaxy;
+struct Galaxy {
+    char coordinates[8][8][8][8];
+    struct Starbase starbases[10];
+    struct Klingon klingons[10];
+} theGalaxy;
 
-    //TODO: code to generate galaxy
-
-
-    return _galaxy
-};
-
-struct Enterprise createEnterprise() {
-    struct Enterprise _enterprise;
-
-    //TODO: code to generate enterprise
-    _enterprise = {{4, 6, 3, 5}, 0.0, 50.0, 15.0, 4};                     //TODO: delete temporary manual declaration once createEnterprise() is complete
-
-    return _enterprise
-};
-
-void gameIntro(struct Galaxy *refGalaxy) {
-    printf("                                    ,------*------,\n");
-    printf("                    ,-------------   '---  ------'\n");
-    printf("                     '-------- --'      / /\n");
-    printf("                         ,---' '-------/ /--,\n");
-    printf("                          '----------------'\n\n");
-    printf("                    THE USS ENTERPRISE --- NCC-1701\n\n\n");
-
-    struct Galaxy newGalaxy;
-    newGalaxy = createGalaxy();
-    *refGalaxy = newGalaxy;
-    struct Enterprise outEnterprise;
-    outEnterprise = createEnterprise();
-
-    return outEnterprise;
-}
+// function delcarations:
+struct Galaxy createGalaxy();
+struct Enterprise createEnterprise();
+struct Enterprise gameIntro(struct Galaxy refGalaxy);
 
 int main()
 {
@@ -75,9 +50,50 @@ int main()
 
     theEnterprise = gameIntro(theGalaxy);
 
-    printf("Hello world!\n");
-    printf("Editing this in atom!\n");
-
-
     return 0;                                                               // indicates normal return from main; no issues
+}
+
+//function definitions:
+struct Galaxy createGalaxy() {
+    struct Galaxy _galaxy;
+
+    //TODO: code to generate galaxy
+
+
+    return _galaxy;
+};
+
+struct Enterprise createEnterprise() {
+    struct Enterprise _enterprise;
+
+    //TODO: code to generate enterprise
+
+    //TODO: delete temporary manual declaration once createEnterprise() is complete
+    _enterprise.position[0] = 4;
+    _enterprise.position[1] = 6;
+    _enterprise.position[2] = 3;
+    _enterprise.position[3] = 5;
+    _enterprise.damage = 0.0;
+    _enterprise.energy = 50.0;
+    _enterprise.shields = 15.0;
+    _enterprise.torpedoes = 4;
+
+    return _enterprise;
+};
+
+struct Enterprise gameIntro(struct Galaxy refGalaxy) {
+    printf("\n                                    ,------*------,\n");
+    printf("                    ,-------------   '---  ------'\n");
+    printf("                     '-------- --'      / /\n");
+    printf("                         ,---' '-------/ /--,\n");
+    printf("                          '----------------'\n\n");
+    printf("                    THE USS ENTERPRISE --- NCC-1701\n\n\n");
+
+    struct Galaxy newGalaxy;
+    newGalaxy = createGalaxy();
+    refGalaxy = newGalaxy;
+    struct Enterprise outEnterprise;
+    outEnterprise = createEnterprise();
+
+    return outEnterprise;
 }
