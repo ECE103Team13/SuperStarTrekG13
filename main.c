@@ -79,7 +79,7 @@ int main() {
     safetyCounter++;
   }
 
-  return 0;                                                               // indicates normal return from main; i.e. no errors
+  return 0;                                                                     // indicates normal return from main; i.e. no errors
 }
 
 //function definitions:
