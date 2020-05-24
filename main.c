@@ -52,7 +52,7 @@ struct Galaxy {
 struct Galaxy createGalaxy();
 struct Enterprise createEnterprise();
 struct Enterprise gameIntro(struct Galaxy refGalaxy);
-void getGameVitals(double *refGameVitals);
+struct Galaxy getGameVitals(struct Galaxy theGalaxy);
 void gameEnd(double *refGVitals);
 void getCommand();
 
@@ -60,6 +60,7 @@ int main() {
   bool gameRunning = true;
   struct Galaxy theGalaxy;
   struct Enterprise theEnterprise;
+    createGalaxy(theGalaxy);
   double gVitals[5];
   theGalaxy = getGameVitals(theGalaxy);
   theEnterprise = gameIntro(theGalaxy);
@@ -74,7 +75,7 @@ int main() {
 
   int safetyCounter = 0;
   while (gameRunning && (safetyCounter <= 1000)) {
-    getGameVitals(gVitals);
+    getGameVitals(theGalaxy);
     gameEnd(gVitals);
     getCommand();
     safetyCounter++;
@@ -85,8 +86,77 @@ int main() {
 
 //function definitions:
 struct Galaxy createGalaxy() {
+    // Does the game always start with the same number of starbases? I picked 10 arbitrarily.
+    int numStarbases = 10;
+    int numKlingons = 26;
+    int numStars = 26;
     struct Galaxy _galaxy;
 
+    // First initialize Galaxy with blank spaces to overwrite anything that was already there.
+    for (int i = 0; i < 8; ++i)
+    {
+        for (int j = 0; j < 8; ++j)
+        {
+            for (int k = 0; k <8; ++k)
+            {
+                for (int l = 0; l <8; ++l)
+                {
+                    _galaxy.coordinates[i][j][k][l] = ' ';
+                }
+            }
+        }
+    }
+
+    // Set up starbases randomly in the galaxy:
+    for (int i = 0; i <numStarbases; ++i)
+    {
+        // 'S' stands for starbase
+        _galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] = 'S';
+    }
+    // Place klingons in random positions in the galaxy (where there aren't any starbases)
+    //'K' stands for klingon
+    for (int i = 0; i < numKlingons; ++i)
+    {
+        if (_galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] != 'S')
+        {
+            _galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] = 'K';
+        }
+    }
+    // Place stars in random positions in the galaxy (check for starbases or klingons first)
+    // '*' stands for star
+    for (int i = 0; i < numStars; ++i)
+    {
+        if ((_galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] != 'S') || (_galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] != 'K'))
+        {
+            _galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] = '*';
+        }
+    }
+
+    // Place Enterprise in an empty spot in the galaxy
+    // 'E' stands for Enterprise
+    if ((_galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] != 'S') || (_galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] != 'K') ||
+        (_galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] != '*'))
+        {
+            _galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] = 'E';
+        }
+
+    //Debug: Print map of galaxy, sector by sector:
+    for (int i = 0; i < 8; ++i)
+    {
+        for (int j = 0; j < 8; ++j)
+        {
+            printf("Sector %d, %d:\n", i, j);
+            for (int k = 0; k <8; ++k)
+            {
+                for (int l = 0; l <8; ++l)
+                {
+                    printf("%c ", _galaxy.coordinates[i][j][k][l]);
+                }
+                printf("\n");
+            }
+        }
+    }
+    //END Debug printf code
     //TODO: code to generate galaxy
 
     return _galaxy;
@@ -140,4 +210,3 @@ void gameEnd(double *refGVitals) {
 void getCommand() {
 
 }
-//test
