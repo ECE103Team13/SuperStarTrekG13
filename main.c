@@ -44,6 +44,8 @@ struct Galaxy {
   char coordinates[8][8][8][8];
   struct Starbase starbases[10];
   struct Klingon klingons[10];
+  struct Enterprise enterprise;
+  struct gameVitals;
 };
 
 // function delcarations:
@@ -59,8 +61,7 @@ int main() {
   struct Galaxy theGalaxy;
   struct Enterprise theEnterprise;
   double gVitals[5];
-  getGameVitals(gVitals);
-
+  theGalaxy = getGameVitals(theGalaxy);
   theEnterprise = gameIntro(theGalaxy);
 
                                                                                 //DEBUG:
@@ -128,7 +129,7 @@ struct Enterprise gameIntro(struct Galaxy refGalaxy) {
   return outEnterprise;
 }
 
-void getGameVitals(double *refGameVitals) {
+struct Galaxy getGameVitals(struct Galaxy theGalaxy) {
 
 }
 
