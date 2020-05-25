@@ -91,6 +91,9 @@ struct Galaxy createGalaxy() {
     int numKlingons = 26;
     int numStars = 26;
     struct Galaxy _galaxy;
+    struct Enterprise theEnterprise;
+    struct Starbase starbases;
+    struct Klingon klingons;
 
     // First initialize Galaxy with blank spaces to overwrite anything that was already there.
     for (int i = 0; i < 8; ++i)
@@ -110,34 +113,70 @@ struct Galaxy createGalaxy() {
     // Set up starbases randomly in the galaxy:
     for (int i = 0; i <numStarbases; ++i)
     {
+            // Generate and save random number coordinates
+        int w = rand()%8;
+        int x = rand()%8;
+        int y = rand()%8;
+        int z = rand()%8;
         // 'S' stands for starbase
-        _galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] = 'S';
+        _galaxy.coordinates[w][x][y][z] = 'S';
+        // Save location in starbases.position array
+        starbases.position[0] = w;
+        starbases.position[1] = x;
+        starbases.position[2] = y;
+        starbases.position[3] = z;
     }
     // Place klingons in random positions in the galaxy (where there aren't any starbases)
     //'K' stands for klingon
     for (int i = 0; i < numKlingons; ++i)
     {
-        if (_galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] != 'S')
+            // Generate and save random number coordinates
+        int w = rand()%8;
+        int x = rand()%8;
+        int y = rand()%8;
+        int z = rand()%8;
+        if (_galaxy.coordinates[w][x][y][z] != 'S')
         {
-            _galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] = 'K';
+            _galaxy.coordinates[w][x][y][z] = 'K';
+            // Save location in klingons.position array
+            klingons.position[0] = w;
+            klingons.position[1] = x;
+            klingons.position[2] = y;
+            klingons.position[3] = z;
         }
     }
     // Place stars in random positions in the galaxy (check for starbases or klingons first)
     // '*' stands for star
     for (int i = 0; i < numStars; ++i)
     {
-        if ((_galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] != 'S') || (_galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] != 'K'))
+            // Generate and save random number coordinates
+        int w = rand()%8;
+        int x = rand()%8;
+        int y = rand()%8;
+        int z = rand()%8;
+        if ((_galaxy.coordinates[w][x][y][z] != 'S') || (_galaxy.coordinates[w][x][y][z] != 'K'))
         {
-            _galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] = '*';
+            _galaxy.coordinates[w][x][y][z] = '*';
+            // I don't think we need to save locations of stars elsewhere?
         }
     }
 
     // Place Enterprise in an empty spot in the galaxy
     // 'E' stands for Enterprise
-    if ((_galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] != 'S') || (_galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] != 'K') ||
-        (_galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] != '*'))
+    // Generate and save random number coordinates
+    int w = rand()%8;
+    int x = rand()%8;
+    int y = rand()%8;
+    int z = rand()%8;
+    if ((_galaxy.coordinates[w][x][y][z] != 'S') || (_galaxy.coordinates[w][x][y][z] != 'K') ||
+        (_galaxy.coordinates[w][x][y][z] != '*'))
         {
-            _galaxy.coordinates[rand()%8][rand()%8][rand()%8][rand()%8] = 'E';
+            _galaxy.coordinates[w][x][y][z] = 'E';
+            // Save this location in theEnterprise.position array
+            theEnterprise.position[0] = w;
+            theEnterprise.position[1] = x;
+            theEnterprise.position[2] = y;
+            theEnterprise.position[3] = z;
         }
 
     //Debug: Print map of galaxy, sector by sector:
@@ -157,7 +196,15 @@ struct Galaxy createGalaxy() {
         }
     }
     //END Debug printf code
-    //TODO: code to generate galaxy
+
+    // Set up initial gameVitals for currentGame
+    struct gameVitals currentGame;
+    currentGame.eDamage = 0;
+    currentGame.eEnergy = 10;
+    currentGame.numStarbases = 10;
+    currentGame.numKlingons = 26;
+    currentGame.stardate = 5004;    // I made this number up
+    currentGame.reputation = 2;
 
     return _galaxy;
 };
