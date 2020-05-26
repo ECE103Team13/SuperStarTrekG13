@@ -53,7 +53,7 @@ struct Galaxy createGalaxy();
 struct Enterprise createEnterprise();
 struct Enterprise gameIntro(struct Galaxy refGalaxy);
 struct Galaxy getGameVitals(struct Galaxy theGalaxy);
-void gameEnd(double *refGVitals);
+int gameEnd(double *refGVitals);
 void getCommand();
 
 int main() {
@@ -76,7 +76,14 @@ int main() {
   int safetyCounter = 0;
   while (gameRunning && (safetyCounter <= 1000)) {
     getGameVitals(theGalaxy);
-    gameEnd(gVitals);
+    if(gameEnd(gVitals) == 0){
+    }
+    else if(gameEnd(gVitals) == 1){
+    //  restart game
+    }
+    else {
+    //  gameRunning = false;
+    }
     getCommand();
     safetyCounter++;
   }
@@ -250,8 +257,42 @@ struct Galaxy getGameVitals(struct Galaxy theGalaxy) {
 
 }
 
-void gameEnd(double *refGVitals) {
+int gameEnd(double *refGVitals) {
+  struct gameVitals currentGame;
+  for(int i = 0; i < 5; ++i){
+    if(refGVitals[i] == 0){
+      char getInput[100] = {0};
 
+      printf("IT IS STARDATE %d\n", currentGame.stardate);
+      printf("THERE WERE %d KLINGON BATTLE CRUISERS LEFT AT\n", currentGame.numKlingons);
+      printf("THE END OF YOUR MISSION.\n\n");
+
+      if(currentGame.numStarbases == 0) {
+        exit(0);
+      }
+      else {
+        printf("THE FEDERATION IS IN NEED OF A NEW STARSHIP COMMANDER\n");
+        printf("FOR A SIMILAR MISSION -- IF THERE IS A VOLUNTEER\n");
+        printf("LET HIM STEP FORWARD AND ENTER 'AYE' ");
+
+        fgets(getInput, 100, stdin);
+        getInput[strlen(getInput) - 1] = '\0';
+
+        if((strcmp(getInput, "AYE") == 0) || (strcmp(getInput, "Aye") == 0)|| (strcmp(getInput, "aye") == 0)) {
+          return 1;
+        }
+        else {
+          printf("\nGame ended\n");
+          return 2;
+        }
+      }
+    }
+    else{
+      if(i == 4) {
+        return 0;
+      }
+    }
+  }
 }
 
 void getCommand() {
