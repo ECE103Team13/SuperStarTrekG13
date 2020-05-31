@@ -52,12 +52,27 @@ struct Galaxy {
 };
 
 // function declarations:
-struct Galaxy createGalaxy();
-struct Enterprise createEnterprise();
+struct Galaxy createGalaxy(void);
+struct Enterprise createEnterprise(void);
 struct gameVitals getGameVitals(struct Galaxy *refGalaxy);
-struct Galaxy gameIntro();
+struct Galaxy gameIntro(void);
 bool gameEnd(struct Galaxy* refGalaxy);
 void getCommand(struct Galaxy* refGalaxy);
+void exeHLP(struct Galaxy *refGalaxy);
+void exeNAV(struct Galaxy *refGalaxy);
+void exeSRS(struct Galaxy *refGalaxy);
+void exeLRS(struct Galaxy *refGalaxy);
+void exeDAM(struct Galaxy *refGalaxy);
+void exeCOM(struct Galaxy *refGalaxy);
+void exePHA(struct Galaxy *refGalaxy);
+void exeTOR(struct Galaxy *refGalaxy);
+void exeSHE(struct Galaxy *refGalaxy);
+void exeXXX(struct Galaxy *refGalaxy);
+void exeDBG(struct Galaxy *refGalaxy);
+void strtrim(char* string, int n);
+void remNL(char* string, int n);
+void strToLower(char* string, int n);
+void strToUpper(char* string, int n);
 
 ////////////////////////////////////////////
 //////////////// START MAIN ////////////////
@@ -80,7 +95,7 @@ int main() {
 
 
 //function definitions:
-struct Galaxy createGalaxy() {
+struct Galaxy createGalaxy(void) {
     // Does the game always start with the same number of starbases? I picked 10 arbitrarily.
     int numStarbases = 10;
     int numKlingons = 26;
@@ -208,7 +223,7 @@ struct Galaxy createGalaxy() {
     return _galaxy;
 };
 
-struct Enterprise createEnterprise() {
+struct Enterprise createEnterprise(void) {
   struct Enterprise _enterprise;
 
   //TODO: code to generate enterprise
@@ -228,7 +243,7 @@ struct Enterprise createEnterprise() {
   return _enterprise;
 };
 
-struct Galaxy gameIntro() {                                             // display splash ASCII, call new game generation functions
+struct Galaxy gameIntro(void) {                                             // display splash ASCII, call new game generation functions
   printf("\n                                    ,------*------,\n");
   printf("                    ,-------------   '---  ------'\n");
   printf("                     '-------- --'      / /\n");
@@ -241,7 +256,7 @@ struct Galaxy gameIntro() {                                             // displ
   struct Galaxy newGalaxy;
   newGalaxy = createGalaxy();
   newGalaxy.enterprise = createEnterprise();
-  exeSRS(newGalaxy);
+  exeSRS(&newGalaxy);
 
   return newGalaxy;
 }
@@ -261,7 +276,7 @@ struct gameVitals getGameVitals(struct Galaxy *refGalaxy) {             //TODO: 
 }
 
 bool gameEnd(struct Galaxy *refGalaxy) {
-    if ((*refGalaxy).gVitals.userQuit) {
+    if ((*refGalaxy).gVitals.userQuit) {                    // If user chooses Quit
         char getInput[100] = {0};
         printf("THE FEDERATION IS IN NEED OF A NEW STARSHIP COMMANDER\n");
         printf("FOR A SIMILAR MISSION -- IF THERE IS A VOLUNTEER\n");
@@ -270,7 +285,9 @@ bool gameEnd(struct Galaxy *refGalaxy) {
         fgets(getInput, 100, stdin);
         getInput[strlen(getInput) - 1] = '\0';
 
-        if((strcmp(getInput, "AYE") == 0) || (strcmp(getInput, "Aye") == 0)|| (strcmp(getInput, "aye") == 0)) {
+// Check if user starts a new game
+        if((strcmp(getInput, "AYE") == 0) || (strcmp(getInput, "Aye") == 0)||
+           (strcmp(getInput, "aye") == 0)) {
             return true;
         } else {
             printf("\nGame ended\n");
@@ -278,18 +295,28 @@ bool gameEnd(struct Galaxy *refGalaxy) {
         }
     }
 
-    for(int i = 0; i < 5; ++i){
+// Check each member of gVitals to see whether game ending conditions are met
+    //for(int i = 0; i < 5; ++i){
+        // If stardate is 0 (time is up)
         if((*refGalaxy).gVitals.stardate == 0){
             char getInput[100] = {0};
 
             printf("IT IS STARDATE %d\n", (*refGalaxy).gVitals.stardate);
             printf("THERE WERE %d KLINGON BATTLE CRUISERS LEFT AT\n", (*refGalaxy).gVitals.numKlingons);
             printf("THE END OF YOUR MISSION.\n\n");
-
-            if((*refGalaxy).gVitals.numStarbases == 0) {
+            return false;
+        }
+        else if((*refGalaxy).gVitals.numStarbases == 0) {
                 printf("NO STARBASES REMAINING!\n");                    // TODO: Fix placeholder game end message for no starbases remaining (gameEnd)
-                exit(0);
-            } else if ((*refGalaxy).gVitals.userQuit) {
+                //exit(0);                      // TODO: I changed this exit to return false
+                return false;
+            }
+        else
+            {
+                return true;
+            }
+    // TODO: I think this loop (check whether user input is Quit) already happens above? Do we need it twice?
+       /*     else if ((*refGalaxy).gVitals.userQuit) {
                 printf("THE FEDERATION IS IN NEED OF A NEW STARSHIP COMMANDER\n");
                 printf("FOR A SIMILAR MISSION -- IF THERE IS A VOLUNTEER\n");
                 printf("LET HIM STEP FORWARD AND ENTER 'AYE' ");
@@ -303,7 +330,8 @@ bool gameEnd(struct Galaxy *refGalaxy) {
                     refGalaxy = &newGalaxy;
                     (*refGalaxy).gVitals.userQuit = false;              // TODO: ensure proper setting of Galaxy.gVitals.userQuit after quitting and starting new game (gameEnd)
                     return false;
-                } else {
+                }
+                else {
                     printf("\nGame ended\n");
                     return true;
                 }
@@ -313,15 +341,16 @@ bool gameEnd(struct Galaxy *refGalaxy) {
       if(i == 4) {
         return true;
       }
-    }
-  }
+    }*/
+//}
 }
 
 void getCommand(struct Galaxy *refGalaxy) {
     char cmdString[MAX_INPUT_LENGTH];
     printf("Enter Command: ");                                                                          // Prompt user for command input
     fgets(cmdString, MAX_INPUT_LENGTH, stdin);
-    strtrim(cmdString, strlen(strtrim));                                                                // Trim any leading spaces off the input
+    strtrim(cmdString, strlen(strtrim));
+    // Trim any leading spaces off the input
     if ((strchr(cmdString, '?') != NULL) || ((strstr(cmdString, "HELP") != NULL))) {                    // Check for a few basic commands that might be indicating a request for help
             exeHLP(refGalaxy);                                                                          // if detected, execute help command
     } else {
@@ -373,6 +402,25 @@ void exeSRS(struct Galaxy *refGalaxy) {                                 // TODO:
 
 void exeLRS(struct Galaxy *refGalaxy) {                                 // TODO: implement LRS subroutine
     printf("'LRS' command executed.\n\n");
+    if((*refGalaxy).gVitals.eDamage == 0) {
+        printf("Long Range Sensors are Inoperable.\n");
+        // TODO: Add other code here of what to do in this case (see Source Code line 4000)
+    }
+    else {
+        printf("Long Range Scan for Quadrant %d, %d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]);
+        for (int i = (*refGalaxy).enterprise.position[0]-1; i = (*refGalaxy).enterprise.position[0]+1; i++) {
+            for (int j = (*refGalaxy).enterprise.position[0]-1; j = (*refGalaxy).enterprise.position[0]+1; j++) {
+                if ((i > 0) && (i < 8) && (j < 0) && (j > 8)) {
+                    for (int l = 0; l < 3; ++l) {
+                        printf(":  %d%d%d  :  %d%d%d  :  %d%d%d  :", (*refGalaxy).klingons, (*refGalaxy).starbases.position[i], (*refGalaxy).stars, (*refGalaxy).klingons, (*refGalaxy).starbases.position[i], (*refGalaxy).stars, (*refGalaxy).klingons, (*refGalaxy).starbases.position[i], (*refGalaxy).stars);
+                    }
+                    // TODO: Sorry - I need to come back to this and keep working.
+                    printf("/n");
+                }
+            }
+        }
+    }
+
     return;
 }
 
