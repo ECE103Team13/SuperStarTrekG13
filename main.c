@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <ctype.h>
+#include <time.h>
 
 #define MAX_INPUT_LENGTH 127
 
@@ -53,7 +54,7 @@ struct Galaxy {
 
 // function declarations:
 struct Galaxy createGalaxy(void);
-struct Enterprise createEnterprise(void);
+struct Enterprise createEnterprise(struct Galaxy *refGalaxy);
 struct gameVitals getGameVitals(struct Galaxy *refGalaxy);
 struct Galaxy gameIntro(void);
 bool gameEnd(struct Galaxy* refGalaxy);
@@ -97,9 +98,9 @@ int main() {
 //function definitions:
 struct Galaxy createGalaxy(void) {
     // Does the game always start with the same number of starbases? I picked 10 arbitrarily.
-    int numStarbases = 10;
+    int numStarbases = 3;
     int numKlingons = 26;
-    int numStars = 26;
+    int numStars = 100;
     struct Galaxy _galaxy;
     struct Enterprise theEnterprise;
     struct Starbase starbases;
@@ -124,6 +125,7 @@ struct Galaxy createGalaxy(void) {
     for (int i = 0; i <numStarbases; ++i)
     {
             // Generate and save random number coordinates
+        srand((int)time(0));
         int w = rand()%8;
         int x = rand()%8;
         int y = rand()%8;
@@ -171,27 +173,11 @@ struct Galaxy createGalaxy(void) {
         }
     }
 
-    // Place Enterprise in an empty spot in the galaxy
-    // 'E' stands for Enterprise
-    // Generate and save random number coordinates
-    int w = rand()%8;
-    int x = rand()%8;
-    int y = rand()%8;
-    int z = rand()%8;
-    if ((_galaxy.coordinates[w][x][y][z] != 'S') || (_galaxy.coordinates[w][x][y][z] != 'K') ||
-        (_galaxy.coordinates[w][x][y][z] != '*'))
-        {
-            _galaxy.coordinates[w][x][y][z] = 'E';
-            // Save this location in theEnterprise.position array
-            theEnterprise.position[0] = w;
-            theEnterprise.position[1] = x;
-            theEnterprise.position[2] = y;
-            theEnterprise.position[3] = z;
-        }
 
-                                                                    /*
+
+
                                                                     //Debug: Print map of galaxy, sector by sector:
-                                                                    for (int i = 0; i < 8; ++i)
+                                                             /*       for (int i = 0; i < 8; ++i)
                                                                     {
                                                                         for (int j = 0; j < 8; ++j)
                                                                         {
@@ -205,34 +191,53 @@ struct Galaxy createGalaxy(void) {
                                                                                 printf("\n");
                                                                             }
                                                                         }
-                                                                    }
+                                                                    }*/
                                                                     //END Debug printf code
-                                                                    */
+
 
     // Set up initial gameVitals for currentGame
     //struct gameVitals currentGame;
 
-    _galaxy.gVitals.eDamage = 0;
+// All game vitals will count down to 0
+// If any game vital reaches 0, game will end.
+    _galaxy.gVitals.eDamage = 1;
     _galaxy.gVitals.eEnergy = 10;
-    _galaxy.gVitals.numStarbases = 10;
+    _galaxy.gVitals.numStarbases = 3;
     _galaxy.gVitals.numKlingons = 26;
-    _galaxy.gVitals.stardate = 20;    // I made this number up
+    _galaxy.gVitals.stardate = 26;
     _galaxy.gVitals.reputation = 2;
     _galaxy.gVitals.userQuit = false;
 
     return _galaxy;
 };
 
-struct Enterprise createEnterprise(void) {
+struct Enterprise createEnterprise(struct Galaxy *refGalaxy) {
   struct Enterprise _enterprise;
+    // Place Enterprise in an empty spot in the galaxy
+    // 'E' stands for Enterprise
+    // Generate and save random number coordinates
+    int w = rand()%8;
+    int x = rand()%8;
+    int y = rand()%8;
+    int z = rand()%8;
+    if (((*refGalaxy).coordinates[w][x][y][z] != 'S') || ((*refGalaxy).coordinates[w][x][y][z] != 'K') ||
+        ((*refGalaxy).coordinates[w][x][y][z] != '*'))
+        {
+            (*refGalaxy).coordinates[w][x][y][z] = 'E';
+            // Save this location in theEnterprise.position array
+            _enterprise.position[0] = w;
+            _enterprise.position[1] = x;
+            _enterprise.position[2] = y;
+            _enterprise.position[3] = z;
+        }
 
   //TODO: code to generate enterprise
 
   //TODO: delete following temporary manual declaration once createEnterprise() is complete
-  _enterprise.position[0] = 4;
-  _enterprise.position[1] = 6;
-  _enterprise.position[2] = 3;
-  _enterprise.position[3] = 5;
+  //_enterprise.position[0] = 4;
+  //_enterprise.position[1] = 6;
+  //_enterprise.position[2] = 3;
+  //_enterprise.position[3] = 5;
   _enterprise.damage = 0.0;
   _enterprise.energy = 50.0;
   _enterprise.shields = 15.0;
@@ -255,7 +260,7 @@ struct Galaxy gameIntro(void) {                                             // d
 
   struct Galaxy newGalaxy;
   newGalaxy = createGalaxy();
-  newGalaxy.enterprise = createEnterprise();
+  newGalaxy.enterprise = createEnterprise(&newGalaxy);
   exeSRS(&newGalaxy);
 
   return newGalaxy;
@@ -408,16 +413,29 @@ void exeLRS(struct Galaxy *refGalaxy) {                                 // TODO:
     }
     else {
         printf("Long Range Scan for Quadrant %d, %d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]);
-        for (int i = (*refGalaxy).enterprise.position[0]-1; i = (*refGalaxy).enterprise.position[0]+1; i++) {
-            for (int j = (*refGalaxy).enterprise.position[0]-1; j = (*refGalaxy).enterprise.position[0]+1; j++) {
-                if ((i > 0) && (i < 8) && (j < 0) && (j > 8)) {
-                    for (int l = 0; l < 3; ++l) {
-                        printf(":  %d%d%d  :  %d%d%d  :  %d%d%d  :", (*refGalaxy).klingons, (*refGalaxy).starbases.position[i], (*refGalaxy).stars, (*refGalaxy).klingons, (*refGalaxy).starbases.position[i], (*refGalaxy).stars, (*refGalaxy).klingons, (*refGalaxy).starbases.position[i], (*refGalaxy).stars);
+        printf("---------------------------\n");
+        for (int w = (*refGalaxy).enterprise.position[0]-1; w <= (*refGalaxy).enterprise.position[0]+1; w++) {
+            for (int x = (*refGalaxy).enterprise.position[1]-1; x <= (*refGalaxy).enterprise.position[1]+1; x++) {
+                int klingonCounter = 0;
+                int starbaseCounter = 0;
+                int starCounter = 0;
+                for (int y = 0; y < 8; y++) {
+                    for (int z = 0; z < 8; z++) {
+                        if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
+                                           klingonCounter = klingonCounter + 1;
+                                       }
+                                       if ((*refGalaxy).coordinates[w][x][y][z] == 'S') {
+                                           starbaseCounter = starbaseCounter + 1;
+                                       }
+                                       if ((*refGalaxy).coordinates[w][x][y][z] == '*') {
+                                           starCounter = starCounter + 1;
+                                       }
+
                     }
-                    // TODO: Sorry - I need to come back to this and keep working.
-                    printf("/n");
                 }
+                printf("  :  %d%d%d", klingonCounter, starbaseCounter, starCounter);
             }
+            printf("  :\n---------------------------\n");
         }
     }
 
@@ -430,7 +448,73 @@ void exeDAM(struct Galaxy *refGalaxy) {                                 // TODO:
 }
 
 void exeCOM(struct Galaxy *refGalaxy) {                                 // TODO: implement COM subroutine
-    printf("'COM' command executed.\n\n");
+    printf("Computer active and awaiting command: ");
+    char command = getchar();
+    getchar(); // Extra getchar to get rid of the newline
+    switch(command) {
+        case ('0'):
+            printf("case 0\n");
+            // TODO: This prints a map of the galaxy quadrants, with names, but the trick is that it only shows information (quantity of starbases, klingons, stars) for quadrants that have been long range scanned or visited. So we may need a new variable to keep track of that?
+            break;
+        case ('1'):
+            printf("\nStatus Report:\n");
+            printf("Klingons Left: %d\n", (*refGalaxy).gVitals.numKlingons);
+            printf("Mission must be completed in %d stardates\n", (*refGalaxy).gVitals.stardate);
+            printf("The Federation is maintaining %d starbases in the galaxy\n", (*refGalaxy).gVitals.numStarbases);
+            printf("\nDevice           State of Repair\n");
+            printf("Warp Engines         %d\n", (*refGalaxy).gVitals.eDamage);
+            printf("Short Range Sensors  %d\n", (*refGalaxy).gVitals.eDamage);
+            printf("Long Range Sensors   %d\n", (*refGalaxy).gVitals.eDamage);
+            printf("Phaser Control       %d\n", (*refGalaxy).gVitals.eDamage);
+            printf("Photon Tubes         %d\n", (*refGalaxy).gVitals.eDamage);
+            printf("Damage Control       %d\n", (*refGalaxy).gVitals.eDamage);
+            printf("Shield Control       %d\n", (*refGalaxy).gVitals.eDamage);
+            printf("Library Computer     %d\n", (*refGalaxy).gVitals.eDamage);
+            printf("\n\n");
+            // TODO: Should we have separate damage variables for each of the above 8 elements? I think this is why Damage is an array of 8 in the original BASIC code?
+            break;
+        case ('2'):
+            printf("From Enterprise to Klingon Battle Cruser\n");
+            printf("Direction = \n");
+            printf("Distance = \n");
+            // TODO: Add code here to calculate distance. I'm not sure how they decide which klingon to calculate the distance to. Maybe the nearest one?
+            break;
+        case ('3'):
+            printf("Mr. Spock reports, ""sensors show %d starbases in this quadrant.""\n");
+            // TODO: Add code to get currant quadrant (enterprise position?) and count starbases in it.
+            break;
+        case ('4'):
+            printf("Direction/Distance Calculator\n");
+            printf("You are at quadrant %d, %d, sector %d, %d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1], (*refGalaxy).enterprise.position[2], (*refGalaxy).enterprise.position[3]);
+            printf("Please enter \n    initial coordinates(x,y): \n");
+            int destinationQ1;
+            int destinationQ2;
+            int destinationS1;
+            int destinationS2;
+            scanf("%d,%d", &destinationQ1, &destinationQ2);
+            printf("    final coordinates(x,y): \n");
+            scanf("%d,%d", &destinationS1, &destinationS2);
+            getchar();   // Extra getchar to get rid of newline in input buffer
+            printf("Direction = \n");
+            printf("Distance = \n");
+            // TODO: Code to calculate direction and distance to given coordinates
+            break;
+        case ('5'):
+            printf("                        The Galaxy\n");
+            printf("    1      2      3      4      5      6      7      8\n");
+            printf("1           Antares          |           Sirius\n");
+            printf("2           Rigel            |           Deneb\n");
+            printf("3           Procyon          |           Capella\n");
+            printf("4           Vega             |           Betelgeuse\n");
+            printf("5           Canopus          |           Aldebaran\n");
+            printf("6           Altair           |           Regulus\n");
+            printf("7           Sagittarius      |           Arcturus\n");
+            printf("8           Pollux           |           Spica\n");
+            break;
+        default:
+            printf("Unrecognized command. Enter 0 - 5.\n");
+            break;
+    }
     return;
 }
 
