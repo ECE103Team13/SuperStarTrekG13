@@ -6,9 +6,6 @@
 
 #define MAX_INPUT_LENGTH 127
 
-int dbg1 = 0;                                                   // TODO: delete this general-use global debug counter
-char dbgs[6] = "";                                              // TODO: delete this general-use global debug string
-
 // enum declarations:
 typedef enum {GREEN, YELLOW, RED} Condition;
 
@@ -62,8 +59,8 @@ struct Galaxy gameIntro();
 bool gameEnd(struct Galaxy* refGalaxy);
 void getCommand(struct Galaxy* refGalaxy);
 
-////// START MAIN()
-//////
+////////////////////////////////////////////
+//////////////// START MAIN ////////////////
 int main() {
     bool gameRunning = true;
     struct Galaxy theGalaxy;
@@ -78,8 +75,9 @@ int main() {
     }
     return 0;                                                                     // indicates normal return from main; i.e. no errors
 }
-////// END MAIN()
-//////
+///////////////// END MAIN /////////////////
+////////////////////////////////////////////
+
 
 //function definitions:
 struct Galaxy createGalaxy() {
@@ -289,7 +287,7 @@ bool gameEnd(struct Galaxy *refGalaxy) {
             printf("THE END OF YOUR MISSION.\n\n");
 
             if((*refGalaxy).gVitals.numStarbases == 0) {
-                printf("NO STARBASES REMAINING!\n");        // TODO: Fix placeholder game end message for no starbases remaining
+                printf("NO STARBASES REMAINING!\n");                    // TODO: Fix placeholder game end message for no starbases remaining (gameEnd)
                 exit(0);
             } else if ((*refGalaxy).gVitals.userQuit) {
                 printf("THE FEDERATION IS IN NEED OF A NEW STARSHIP COMMANDER\n");
@@ -300,10 +298,14 @@ bool gameEnd(struct Galaxy *refGalaxy) {
                 getInput[strlen(getInput) - 1] = '\0';
 
                 if((strcmp(getInput, "AYE") == 0) || (strcmp(getInput, "Aye") == 0)|| (strcmp(getInput, "aye") == 0)) {
-                    return true;
+                    struct Galaxy newGalaxy;
+                    newGalaxy = gameIntro();
+                    refGalaxy = &newGalaxy;
+                    (*refGalaxy).gVitals.userQuit = false;              // TODO: ensure proper setting of Galaxy.gVitals.userQuit after quitting and starting new game (gameEnd)
+                    return false;
                 } else {
                     printf("\nGame ended\n");
-                    return false;
+                    return true;
                 }
             }
     }
