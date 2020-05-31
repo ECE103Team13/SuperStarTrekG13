@@ -45,50 +45,52 @@ struct Galaxy {
   struct Starbase starbases[10];
   struct Klingon klingons[10];
   struct Enterprise enterprise;
-  struct gameVitals;
+  struct gameVitals gVitals;
 };
 
-// function delcarations:
+// function declarations:
 struct Galaxy createGalaxy();
 struct Enterprise createEnterprise();
-struct Enterprise gameIntro(struct Galaxy refGalaxy);
-struct Galaxy getGameVitals(struct Galaxy theGalaxy);
-int gameEnd(double *refGVitals);
+struct gameVitals getGameVitals(struct Galaxy *refGalaxy);
+struct Galaxy gameIntro();
+bool gameEnd(struct Galaxy* refGalaxy);
 void getCommand();
 
 int main() {
   bool gameRunning = true;
   struct Galaxy theGalaxy;
-  struct Enterprise theEnterprise;
-    createGalaxy(theGalaxy);
-  double gVitals[5];
-  theGalaxy = getGameVitals(theGalaxy);
-  theEnterprise = gameIntro(theGalaxy);
+  theGalaxy = gameIntro();
+  theGalaxy.gVitals = getGameVitals(&theGalaxy);
 
-                                                                                //DEBUG:
-                                                                                printf("ENTERPRISE STATUS:\n");
-                                                                                printf("Position-\n  Quadrant:\t(%d,%d)\n  Sector:\t(%d,%d)\n", theEnterprise.position[0], theEnterprise.position[1], theEnterprise.position[2], theEnterprise.position[3]);
-                                                                                printf("Damage:\t\t%4.1f\n", theEnterprise.damage);
-                                                                                printf("Energy:\t\t%4.1f\n", theEnterprise.energy);
-                                                                                printf("Shields:\t%4.1f\n", theEnterprise.shields);
-                                                                                printf("Torpedoes:\t%4d\n", theEnterprise.torpedoes);
+                                        //DEBUG:
+                                        printf("ENTERPRISE STATUS:\n");
+                                        printf("Position-\n  Quadrant:\t(%d,%d)\n  Sector:\t(%d,%d)\n", theGalaxy.enterprise.position[0], theGalaxy.enterprise.position[1], theGalaxy.enterprise.position[2], theGalaxy.enterprise.position[3]);
+                                        printf("Damage:\t\t%4.1f\n", theGalaxy.enterprise.damage);
+                                        printf("Energy:\t\t%4.1f\n", theGalaxy.enterprise.energy);
+                                        printf("Shields:\t%4.1f\n", theGalaxy.enterprise.shields);
+                                        printf("Torpedoes:\t%4d\n", theGalaxy.enterprise.torpedoes);
+                                        //END DEBUG
 
-  int safetyCounter = 0;
-  while (gameRunning && (safetyCounter <= 1000)) {
-    getGameVitals(theGalaxy);
-    if(gameEnd(gVitals) == 0){
-    }
-    else if(gameEnd(gVitals) == 1){
-    //  restart game
-    }
-    else {
-    //  gameRunning = false;
-    }
-    getCommand();
-    safetyCounter++;
-  }
+    int safetyCounter = 0;
+    while (gameRunning && (safetyCounter <= 1000)) {
 
-  return 0;                                                                     // indicates normal return from main; i.e. no errors
+        /*
+        theEnd = gameEnd(theGalaxy.gVitals);
+        if(theEnd == 0){
+            // Nothing happens. (Probably? For now, at least?)
+        }
+        else if(theEnd == 1){
+            // restart game
+        }
+        else {
+            // gameRunning = false;
+        }
+        */
+        getCommand(&theGalaxy);
+        gameRunning = gameEnd(&theGalaxy);
+        safetyCounter++;
+    }
+    return 0;                                                                     // indicates normal return from main; i.e. no errors
 }
 
 //function definitions:
@@ -186,23 +188,25 @@ struct Galaxy createGalaxy() {
             theEnterprise.position[3] = z;
         }
 
-    //Debug: Print map of galaxy, sector by sector:
-    for (int i = 0; i < 8; ++i)
-    {
-        for (int j = 0; j < 8; ++j)
-        {
-            printf("Sector %d, %d:\n", i, j);
-            for (int k = 0; k <8; ++k)
-            {
-                for (int l = 0; l <8; ++l)
-                {
-                    printf("%c ", _galaxy.coordinates[i][j][k][l]);
-                }
-                printf("\n");
-            }
-        }
-    }
-    //END Debug printf code
+                                                                    /*
+                                                                    //Debug: Print map of galaxy, sector by sector:
+                                                                    for (int i = 0; i < 8; ++i)
+                                                                    {
+                                                                        for (int j = 0; j < 8; ++j)
+                                                                        {
+                                                                            printf("Sector %d, %d:\n", i, j);
+                                                                            for (int k = 0; k <8; ++k)
+                                                                            {
+                                                                                for (int l = 0; l <8; ++l)
+                                                                                {
+                                                                                    printf("%c ", _galaxy.coordinates[i][j][k][l]);
+                                                                                }
+                                                                                printf("\n");
+                                                                            }
+                                                                        }
+                                                                    }
+                                                                    //END Debug printf code
+                                                                    */
 
     // Set up initial gameVitals for currentGame
     struct gameVitals currentGame;
@@ -236,60 +240,70 @@ struct Enterprise createEnterprise() {
   return _enterprise;
 };
 
-struct Enterprise gameIntro(struct Galaxy refGalaxy) {
+struct Galaxy gameIntro(struct Galaxy *refGalaxy) {
   printf("\n                                    ,------*------,\n");
   printf("                    ,-------------   '---  ------'\n");
   printf("                     '-------- --'      / /\n");
   printf("                         ,---' '-------/ /--,\n");
   printf("                          '----------------'\n\n");
-  printf("                    THE USS ENTERPRISE --- NCC-1701\n\n\n");
+  printf("                    THE USS ENTERPRISE --- NCC-1701\n\n");
+  printf("                        (Press Enter to begin)\n\n");
+  getchar();
 
   struct Galaxy newGalaxy;
   newGalaxy = createGalaxy();
-  refGalaxy = newGalaxy;
-  struct Enterprise outEnterprise;
-  outEnterprise = createEnterprise();
+  newGalaxy.enterprise = createEnterprise();
 
-  return outEnterprise;
+  return newGalaxy;
 }
 
-struct Galaxy getGameVitals(struct Galaxy theGalaxy) {
+struct gameVitals getGameVitals(struct Galaxy *refGalaxy) {     //TODO: replace manual assignment of gVitals (see below)
+    struct gameVitals GVout;
 
+    GVout.eDamage = (*refGalaxy).enterprise.damage;
+    GVout.eEnergy = (*refGalaxy).enterprise.energy;
+    GVout.numKlingons = 10;                                     // TODO: count number of starbases remaining (getGameVitals)
+    GVout.numStarbases = 10;                                    // TODO: count number of klingons remaining (getGameVitals)
+    GVout.reputation = 25;                                      // TODO: check if stardate limit has expired (getGameVitals)
+    GVout.stardate = 1.0;                                       // TODO: check reputation??? (getGameVitals)
+
+    return GVout;
 }
 
-int gameEnd(double *refGVitals) {
-  struct gameVitals currentGame;
-  for(int i = 0; i < 5; ++i){
-    if(refGVitals[i] == 0){
-      char getInput[100] = {0};
+bool gameEnd(struct Galaxy *refGalaxy) {
+    (*refGalaxy).gVitals = getGameVitals(&refGalaxy);
+    struct gameVitals currentGame = {(*refGalaxy).gVitals.eDamage, (*refGalaxy).gVitals.eDamage, (*refGalaxy).gVitals.numKlingons, (*refGalaxy).gVitals.numStarbases, (*refGalaxy).gVitals.reputation, (*refGalaxy).gVitals.stardate};
 
-      printf("IT IS STARDATE %d\n", currentGame.stardate);
-      printf("THERE WERE %d KLINGON BATTLE CRUISERS LEFT AT\n", currentGame.numKlingons);
-      printf("THE END OF YOUR MISSION.\n\n");
+    for(int i = 0; i < 5; ++i){
+        if(currentGame.stardate == 0){
+            char getInput[100] = {0};
 
-      if(currentGame.numStarbases == 0) {
-        exit(0);
-      }
-      else {
-        printf("THE FEDERATION IS IN NEED OF A NEW STARSHIP COMMANDER\n");
-        printf("FOR A SIMILAR MISSION -- IF THERE IS A VOLUNTEER\n");
-        printf("LET HIM STEP FORWARD AND ENTER 'AYE' ");
+            printf("IT IS STARDATE %d\n", currentGame.stardate);
+            printf("THERE WERE %d KLINGON BATTLE CRUISERS LEFT AT\n", currentGame.numKlingons);
+            printf("THE END OF YOUR MISSION.\n\n");
 
-        fgets(getInput, 100, stdin);
-        getInput[strlen(getInput) - 1] = '\0';
+            if(currentGame.numStarbases == 0) {
+                printf("NO STARBASES REMAINING!\n");        // TODO: Fix placeholder game end message for no starbases remaining
+                exit(0);
+            } else {
+                printf("THE FEDERATION IS IN NEED OF A NEW STARSHIP COMMANDER\n");
+                printf("FOR A SIMILAR MISSION -- IF THERE IS A VOLUNTEER\n");
+                printf("LET HIM STEP FORWARD AND ENTER 'AYE' ");
 
-        if((strcmp(getInput, "AYE") == 0) || (strcmp(getInput, "Aye") == 0)|| (strcmp(getInput, "aye") == 0)) {
-          return 1;
-        }
-        else {
-          printf("\nGame ended\n");
-          return 2;
-        }
-      }
+                fgets(getInput, 100, stdin);
+                getInput[strlen(getInput) - 1] = '\0';
+
+                if((strcmp(getInput, "AYE") == 0) || (strcmp(getInput, "Aye") == 0)|| (strcmp(getInput, "aye") == 0)) {
+                    return true;
+                } else {
+                    printf("\nGame ended\n");
+                    return false;
+                }
+            }
     }
     else{
       if(i == 4) {
-        return 0;
+        return false;
       }
     }
   }
