@@ -596,6 +596,52 @@ void exeTOR(struct Galaxy *refGalaxy) {
         printf("Ensign Chekov reports, ""Incorrect course data, sir!""\n");
         return;
     }
+    // Assign coordinates to current position of enterprise
+    int w = (*refGalaxy).enterprise.position[0];
+    int x = (*refGalaxy).enterprise.position[1];
+    int y = (*refGalaxy).enterprise.position[2];
+    int z = (*refGalaxy).enterprise.position[3];
+    switch (course) {
+        case (1):
+            printf("Torpedo Track:\n");
+            for (int i = z; i < 8; ++i) {
+                printf("            %d, %d\n", y+1, z+1);
+                if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
+                    printf("Klingon destroyed\n");
+                    // Turn Klingon symbol into a blank symbol
+                    (*refGalaxy).coordinates[w][x][y][z] = ' ';
+                    // Decrement numKlingons
+                    (*refGalaxy).gVitals.numKlingons--;
+                    return;
+                }
+                else if ((*refGalaxy).coordinates[w][x][y][z] == '*') {
+                printf("Star at %d, %d absorbed torpedo energy\n", y+1, z+1);
+                return;
+                }
+                else if ((*refGalaxy).coordinates[w][x][y][z] == 'S') {
+                printf("Starbase destroyed\n");
+                (*refGalaxy).coordinates[w][x][y][z] = ' ';
+                // Decrement numStarbases
+                (*refGalaxy).gVitals.numStarbases--;
+                // TODO: This just decrements numStarbases, but if player destroys all 3 starbases some other stuff happens and game ends. Should that go in gameEnd or here? See Source Code 5360.
+                return;
+                }
+                else {
+                    z++;
+                }
+            }
+            break;
+
+ /*       case (2):
+            break;
+        case (3):
+        case (4):
+        case (5):
+        case (6):
+        case (7):
+        case (8):
+        case (9):*/
+    }
     // TODO: Finish torpedo command. See source code 4850
     return;
 }
