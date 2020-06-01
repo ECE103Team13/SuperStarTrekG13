@@ -12,7 +12,7 @@ typedef enum {GREEN, YELLOW, RED} Condition;
 
 //struct declarations:
 struct gameVitals {
-  double eDamage;
+  double eDamage[8];
   double eEnergy;
   int numStarbases;
   int numKlingons;
@@ -37,7 +37,7 @@ struct Klingon {
 
 struct Enterprise {
   int position[4];
-  double damage;
+  double damage[8];
   double energy;
   double shields;
   int torpedoes;
@@ -97,7 +97,6 @@ int main() {
 
 //function definitions:
 struct Galaxy createGalaxy(void) {
-    // Does the game always start with the same number of starbases? I picked 10 arbitrarily.
     int numStarbases = 3;
     int numKlingons = 26;
     int numStars = 100;
@@ -124,8 +123,8 @@ struct Galaxy createGalaxy(void) {
     // Set up starbases randomly in the galaxy:
     for (int i = 0; i <numStarbases; ++i)
     {
-            // Generate and save random number coordinates
-        srand((int)time(0));
+// Generate and save random number coordinates
+        srand((int)time(0));            // Seed rand function with current time
         int w = rand()%8;
         int x = rand()%8;
         int y = rand()%8;
@@ -173,9 +172,6 @@ struct Galaxy createGalaxy(void) {
         }
     }
 
-
-
-
                                                                     //Debug: Print map of galaxy, sector by sector:
                                                              /*       for (int i = 0; i < 8; ++i)
                                                                     {
@@ -200,7 +196,10 @@ struct Galaxy createGalaxy(void) {
 
 // All game vitals will count down to 0
 // If any game vital reaches 0, game will end.
-    _galaxy.gVitals.eDamage = 1;
+    // TODO: I made eDamage an array of 8 items because there are 8 separate things that can be damaged. I hope this doesn't mess up the gVitals function here. We can make 8 individual variables but that seemed silly.
+    for (int i = 0; i < 8; ++i) {
+    _galaxy.gVitals.eDamage[i] = 1;
+    }
     _galaxy.gVitals.eEnergy = 10;
     _galaxy.gVitals.numStarbases = 3;
     _galaxy.gVitals.numKlingons = 26;
@@ -232,13 +231,10 @@ struct Enterprise createEnterprise(struct Galaxy *refGalaxy) {
         }
 
   //TODO: code to generate enterprise
-
   //TODO: delete following temporary manual declaration once createEnterprise() is complete
-  //_enterprise.position[0] = 4;
-  //_enterprise.position[1] = 6;
-  //_enterprise.position[2] = 3;
-  //_enterprise.position[3] = 5;
-  _enterprise.damage = 0.0;
+    for (int i = 0; i < 8; ++i) {
+    _enterprise.damage[i] = 1;
+    }
   _enterprise.energy = 50.0;
   _enterprise.shields = 15.0;
   _enterprise.torpedoes = 4;
@@ -269,7 +265,9 @@ struct Galaxy gameIntro(void) {                                             // d
 struct gameVitals getGameVitals(struct Galaxy *refGalaxy) {             //TODO: replace direct assignment of gVitals (see below)
     struct gameVitals GVout;
 
-    GVout.eDamage = (*refGalaxy).gVitals.eDamage;
+// TODO: I'm sorry if I messed this up. I made eDamage an array of 8; I'm not sure what to do here to make an array work in this function. I commented it out here so the program can generally keep running until we fix this.
+//    GVout.eDamage = (*refGalaxy).gVitals.eDamage;
+
     GVout.eEnergy = (*refGalaxy).gVitals.eEnergy;
     GVout.numKlingons = (*refGalaxy).gVitals.numKlingons;               // TODO: count number of starbases remaining (getGameVitals)
     GVout.numStarbases = (*refGalaxy).gVitals.numStarbases;             // TODO: count number of klingons remaining (getGameVitals)
@@ -405,9 +403,9 @@ void exeSRS(struct Galaxy *refGalaxy) {                                 // TODO:
     return;
 }
 
-void exeLRS(struct Galaxy *refGalaxy) {                                 // TODO: implement LRS subroutine
+void exeLRS(struct Galaxy *refGalaxy) {
     printf("'LRS' command executed.\n\n");
-    if((*refGalaxy).gVitals.eDamage == 0) {
+    if((*refGalaxy).gVitals.eDamage[2] == 0) {
         printf("Long Range Sensors are Inoperable.\n");
         // TODO: Add other code here of what to do in this case (see Source Code line 4000)
     }
@@ -438,7 +436,6 @@ void exeLRS(struct Galaxy *refGalaxy) {                                 // TODO:
             printf("  :\n---------------------------\n");
         }
     }
-
     return;
 }
 
@@ -447,10 +444,15 @@ void exeDAM(struct Galaxy *refGalaxy) {                                 // TODO:
     return;
 }
 
-void exeCOM(struct Galaxy *refGalaxy) {                                 // TODO: implement COM subroutine
+void exeCOM(struct Galaxy *refGalaxy) {
+    // Initialize counter variables to be used in executing computer commands
+    int starbaseCounter = 0;
+
     printf("Computer active and awaiting command: ");
     char command = getchar();
     getchar(); // Extra getchar to get rid of the newline
+
+    // Switch branching statement to execute each possible computer command
     switch(command) {
         case ('0'):
             printf("case 0\n");
@@ -462,16 +464,15 @@ void exeCOM(struct Galaxy *refGalaxy) {                                 // TODO:
             printf("Mission must be completed in %d stardates\n", (*refGalaxy).gVitals.stardate);
             printf("The Federation is maintaining %d starbases in the galaxy\n", (*refGalaxy).gVitals.numStarbases);
             printf("\nDevice           State of Repair\n");
-            printf("Warp Engines         %d\n", (*refGalaxy).gVitals.eDamage);
-            printf("Short Range Sensors  %d\n", (*refGalaxy).gVitals.eDamage);
-            printf("Long Range Sensors   %d\n", (*refGalaxy).gVitals.eDamage);
-            printf("Phaser Control       %d\n", (*refGalaxy).gVitals.eDamage);
-            printf("Photon Tubes         %d\n", (*refGalaxy).gVitals.eDamage);
-            printf("Damage Control       %d\n", (*refGalaxy).gVitals.eDamage);
-            printf("Shield Control       %d\n", (*refGalaxy).gVitals.eDamage);
-            printf("Library Computer     %d\n", (*refGalaxy).gVitals.eDamage);
+            printf("Warp Engines         %d\n", (*refGalaxy).gVitals.eDamage[0]);
+            printf("Short Range Sensors  %d\n", (*refGalaxy).gVitals.eDamage[1]);
+            printf("Long Range Sensors   %d\n", (*refGalaxy).gVitals.eDamage[2]);
+            printf("Phaser Control       %d\n", (*refGalaxy).gVitals.eDamage[3]);
+            printf("Photon Tubes         %d\n", (*refGalaxy).gVitals.eDamage[4]);
+            printf("Damage Control       %d\n", (*refGalaxy).gVitals.eDamage[5]);
+            printf("Shield Control       %d\n", (*refGalaxy).gVitals.eDamage[6]);
+            printf("Library Computer     %d\n", (*refGalaxy).gVitals.eDamage[7]);
             printf("\n\n");
-            // TODO: Should we have separate damage variables for each of the above 8 elements? I think this is why Damage is an array of 8 in the original BASIC code?
             break;
         case ('2'):
             printf("From Enterprise to Klingon Battle Cruser\n");
@@ -480,24 +481,77 @@ void exeCOM(struct Galaxy *refGalaxy) {                                 // TODO:
             // TODO: Add code here to calculate distance. I'm not sure how they decide which klingon to calculate the distance to. Maybe the nearest one?
             break;
         case ('3'):
-            printf("Mr. Spock reports, ""sensors show %d starbases in this quadrant.""\n");
-            // TODO: Add code to get currant quadrant (enterprise position?) and count starbases in it.
+            // Initialize starbaseCounter to check current quadrant for starbases
+            starbaseCounter = 0;
+            // Check enterprise position quadrant against the other items in this sector
+            int w = (*refGalaxy).enterprise.position[0];
+            int x = (*refGalaxy).enterprise.position[1];
+            for (int y = 0; y < 8; y++) {
+                for (int z = 0; z < 8; z++) {
+                    if ((*refGalaxy).coordinates[w][x][y][z] == 'S') {
+                    starbaseCounter = starbaseCounter + 1;
+                    }
+                }
+            }
+            printf("Mr. Spock reports, ""sensors show %d starbases in this quadrant.""\n", starbaseCounter);
             break;
         case ('4'):
             printf("Direction/Distance Calculator\n");
             printf("You are at quadrant %d, %d, sector %d, %d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1], (*refGalaxy).enterprise.position[2], (*refGalaxy).enterprise.position[3]);
+            // Ask user for destination coordinates
             printf("Please enter \n    initial coordinates(x,y): \n");
-            int destinationQ1;
-            int destinationQ2;
-            int destinationS1;
-            int destinationS2;
-            scanf("%d,%d", &destinationQ1, &destinationQ2);
+            float Q0;
+            float Q1;
+            float S0;
+            float S1;
+            scanf("%f,%f", &Q0, &Q1);
             printf("    final coordinates(x,y): \n");
-            scanf("%d,%d", &destinationS1, &destinationS2);
+            scanf("%f,%f", &S0, &S1);
             getchar();   // Extra getchar to get rid of newline in input buffer
-            printf("Direction = \n");
-            printf("Distance = \n");
-            // TODO: Code to calculate direction and distance to given coordinates
+            int Direction = 0;
+            // Calculate direction
+            if ((*refGalaxy).enterprise.position[0] < Q0) {
+                if ((*refGalaxy).enterprise.position[1] < Q1) {
+                    Direction = 1;
+                }
+                else if ((*refGalaxy).enterprise.position[1] == Q1) {
+                    Direction = 2;
+                }
+                else {
+                    Direction = 3;
+                }
+            }
+            else if ((*refGalaxy).enterprise.position[0] == Q0) {
+                if ((*refGalaxy).enterprise.position[1] < Q1) {
+                    Direction = 4;
+                }
+                else if ((*refGalaxy).enterprise.position[1] == Q1) {
+                    Direction = 5;
+                }
+                else {
+                    Direction = 6;
+                }
+            }
+            else {
+                if ((*refGalaxy).enterprise.position[1] < Q1) {
+                    Direction = 7;
+                }
+                else if ((*refGalaxy).enterprise.position[1] < Q1) {
+                    Direction = 8;
+                }
+                else {
+                        Direction = 9;
+                    }
+                }
+            // Calculate distance between current location and destination
+            // TODO: I used the Distance Formula to calculate the distance between 2 quadrants. But we actually need to calculate distance between specific sector in 1 quadrant and specific sector in another quadrant. This is more math than I can face right now - I'll come back to this.
+            float EQ0 = (*refGalaxy).enterprise.position[0];
+            float EQ1 = (*refGalaxy).enterprise.position[1];
+            float ES0 = (*refGalaxy).enterprise.position[2];
+            float ES1 = (*refGalaxy).enterprise.position[3];
+            float Distance = sqrt(pow((EQ0 - Q0),2) + pow((EQ1 - Q1), 2));
+            printf("Direction = %d\n", Direction);
+            printf("Distance = %f\n", Distance);
             break;
         case ('5'):
             printf("                        The Galaxy\n");
@@ -523,8 +577,26 @@ void exePHA(struct Galaxy *refGalaxy) {                                 // TODO:
     return;
 }
 
-void exeTOR(struct Galaxy *refGalaxy) {                                 // TODO: implement TOR subroutine
-    printf("'TOR' command executed.\n\n");
+void exeTOR(struct Galaxy *refGalaxy) {
+    // If torpedoes are used up
+    if ((*refGalaxy).enterprise.torpedoes < 1) {
+        printf("All photon torpedoes expended.\n");
+        return;
+    }
+    // If photon tubes are damaged
+    if ((*refGalaxy).gVitals.eDamage[4] < 0) {
+        printf("Photon tubes are not operational.\n");
+        return;
+    }
+    printf("Input photon torpedo course (1-9): ");
+    int course = 0;
+    scanf("%d", &course);
+    getchar();   // Get extra newline character from input buffer
+    if ((course < 1) || (course > 9)) {
+        printf("Ensign Chekov reports, ""Incorrect course data, sir!""\n");
+        return;
+    }
+    // TODO: Finish torpedo command. See source code 4850
     return;
 }
 
