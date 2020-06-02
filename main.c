@@ -120,33 +120,39 @@ struct Galaxy createGalaxy(void) {
         }
     }
 
+    // Place the Enterprise in the galaxy:
+    _galaxy.coordinates[5][6][4][1] = 'E';
+
     // Set up starbases randomly in the galaxy:
     for (int i = 0; i <numStarbases; ++i)
     {
-// Generate and save random number coordinates
+        // Generate and save random number coordinates
         srand((int)time(0));            // Seed rand function with current time
         int w = rand()%8;
         int x = rand()%8;
         int y = rand()%8;
         int z = rand()%8;
-        // 'S' stands for starbase
-        _galaxy.coordinates[w][x][y][z] = 'S';
-        // Save location in starbases.position array
-        starbases.position[0] = w;
-        starbases.position[1] = x;
-        starbases.position[2] = y;
-        starbases.position[3] = z;
-    }
+        // Check that the spot is empty
+        if (_galaxy.coordinates[w][x][y][z] != 'E') {
+            // 'S' stands for starbase
+            _galaxy.coordinates[w][x][y][z] = 'S';
+            // Save location in starbases.position array
+            starbases.position[0] = w;
+            starbases.position[1] = x;
+            starbases.position[2] = y;
+            starbases.position[3] = z;
+            }
+        }
     // Place klingons in random positions in the galaxy (where there aren't any starbases)
     //'K' stands for klingon
     for (int i = 0; i < numKlingons; ++i)
     {
-            // Generate and save random number coordinates
+        // Generate and save random number coordinates
         int w = rand()%8;
         int x = rand()%8;
         int y = rand()%8;
         int z = rand()%8;
-        if (_galaxy.coordinates[w][x][y][z] != 'S')
+        if ((_galaxy.coordinates[w][x][y][z] != 'S') && (_galaxy.coordinates[w][x][y][z] != 'E'))
         {
             _galaxy.coordinates[w][x][y][z] = 'K';
             // Save location in klingons.position array
@@ -165,7 +171,7 @@ struct Galaxy createGalaxy(void) {
         int x = rand()%8;
         int y = rand()%8;
         int z = rand()%8;
-        if ((_galaxy.coordinates[w][x][y][z] != 'S') || (_galaxy.coordinates[w][x][y][z] != 'K'))
+        if ((_galaxy.coordinates[w][x][y][z] != 'S') && (_galaxy.coordinates[w][x][y][z] != 'K') && (_galaxy.coordinates[w][x][y][z] != 'E'))
         {
             _galaxy.coordinates[w][x][y][z] = '*';
             // I don't think we need to save locations of stars elsewhere?
@@ -212,23 +218,11 @@ struct Galaxy createGalaxy(void) {
 
 struct Enterprise createEnterprise(struct Galaxy *refGalaxy) {
   struct Enterprise _enterprise;
-    // Place Enterprise in an empty spot in the galaxy
-    // 'E' stands for Enterprise
-    // Generate and save random number coordinates
-    int w = rand()%8;
-    int x = rand()%8;
-    int y = rand()%8;
-    int z = rand()%8;
-    if (((*refGalaxy).coordinates[w][x][y][z] != 'S') || ((*refGalaxy).coordinates[w][x][y][z] != 'K') ||
-        ((*refGalaxy).coordinates[w][x][y][z] != '*'))
-        {
-            (*refGalaxy).coordinates[w][x][y][z] = 'E';
-            // Save this location in theEnterprise.position array
-            _enterprise.position[0] = w;
-            _enterprise.position[1] = x;
-            _enterprise.position[2] = y;
-            _enterprise.position[3] = z;
-        }
+    // Place Enterprise in the middle of the galaxy
+        _enterprise.position[0] = 4;
+        _enterprise.position[1] = 5;
+        _enterprise.position[2] = 3;
+        _enterprise.position[3] = 0;
 
   //TODO: code to generate enterprise
   //TODO: delete following temporary manual declaration once createEnterprise() is complete
@@ -588,26 +582,32 @@ void exeTOR(struct Galaxy *refGalaxy) {
         printf("Photon tubes are not operational.\n");
         return;
     }
-    printf("Input photon torpedo course (1-9): ");
+    printf("Input photon torpedo course (1-8): ");
     int course = 0;
     scanf("%d", &course);
     getchar();   // Get extra newline character from input buffer
-    if ((course < 1) || (course > 9)) {
+    if ((course < 1) || (course > 8)) {
         printf("Ensign Chekov reports, ""Incorrect course data, sir!""\n");
         return;
     }
+    // Decrement numberTorpedos:
+    (*refGalaxy).enterprise.torpedoes--;
     // Assign coordinates to current position of enterprise
     int w = (*refGalaxy).enterprise.position[0];
     int x = (*refGalaxy).enterprise.position[1];
     int y = (*refGalaxy).enterprise.position[2];
     int z = (*refGalaxy).enterprise.position[3];
     switch (course) {
-        case (1):
+        case (1):           // Direction 1: EAST
+            z++;
+            if (z < 8) {
             printf("Torpedo Track:\n");
-            for (int i = z; i < 8; ++i) {
+            }
+            while (z < 8) {
                 printf("            %d, %d\n", y+1, z+1);
                 if (z == 7) {
                     printf("Torpedo missed!\n");
+                    return;
                 }
                 if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
                     printf("Klingon destroyed\n");
@@ -634,22 +634,274 @@ void exeTOR(struct Galaxy *refGalaxy) {
                 }
             }
             break;
-
- /*       case (2):
+        case (2):               // Direction 2: NORTHEAST
+            z++;
+            y--;
+            if ((z < 8) && (y > 0)) {
+            printf("Torpedo Track:\n");
+            }
+            while ((z < 8) && (y >= 0)) {
+                printf("            %d, %d\n", y+1, z+1);
+                if ((z == 7) || (y == 0))  {
+                    printf("Torpedo missed!\n");
+                    return;
+                }
+                if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
+                    printf("Klingon destroyed\n");
+                    // Turn Klingon symbol into a blank symbol
+                    (*refGalaxy).coordinates[w][x][y][z] = ' ';
+                    // Decrement numKlingons
+                    (*refGalaxy).gVitals.numKlingons--;
+                    return;
+                }
+                else if ((*refGalaxy).coordinates[w][x][y][z] == '*') {
+                printf("Star at %d, %d absorbed torpedo energy\n", y+1, z+1);
+                return;
+                }
+                else if ((*refGalaxy).coordinates[w][x][y][z] == 'S') {
+                printf("Starbase destroyed\n");
+                (*refGalaxy).coordinates[w][x][y][z] = ' ';
+                // Decrement numStarbases
+                (*refGalaxy).gVitals.numStarbases--;
+                // TODO: So far this only decrements numStarbases, but if player destroys all 3 starbases some other stuff happens and game ends. Should that go in gameEnd or here? See Source Code 5360.
+                return;
+                }
+                else {
+                    z++;
+                    y--;
+                }
+            }
             break;
-        case (3):
-        case (4):
-        case (5):
-        case (6):
-        case (7):
-        case (8):
-        case (9):*/
+        case (3):               // DIRECTION 3: NORTH
+            y--;
+            if (y > 0) {
+            printf("Torpedo Track:\n");
+            }
+            while (y >= 0) {
+                printf("            %d, %d\n", y+1, z+1);
+                if (y == 0) {
+                    printf("Torpedo missed!\n");
+                    return;
+                }
+                if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
+                    printf("Klingon destroyed\n");
+                    // Turn Klingon symbol into a blank symbol
+                    (*refGalaxy).coordinates[w][x][y][z] = ' ';
+                    // Decrement numKlingons
+                    (*refGalaxy).gVitals.numKlingons--;
+                    return;
+                }
+                else if ((*refGalaxy).coordinates[w][x][y][z] == '*') {
+                printf("Star at %d, %d absorbed torpedo energy\n", y+1, z+1);
+                return;
+                }
+                else if ((*refGalaxy).coordinates[w][x][y][z] == 'S') {
+                printf("Starbase destroyed\n");
+                (*refGalaxy).coordinates[w][x][y][z] = ' ';
+                // Decrement numStarbases
+                (*refGalaxy).gVitals.numStarbases--;
+                // TODO: So far this only decrements numStarbases, but if player destroys all 3 starbases some other stuff happens and game ends. Should that go in gameEnd or here? See Source Code 5360.
+                return;
+                }
+                else {
+                    y--;
+                }
+            }
+            break;
+        case (4):               // DIRECTION 4: NORTHWEST
+            y--;
+            z--;
+            if ((z > 0) && (y > 0)) {
+            printf("Torpedo Track:\n");
+            }
+            while ((y >= 0) && (z >= 0)) {
+                printf("            %d, %d\n", y+1, z+1);
+                if ((z == 0) || (y == 0)) {
+                    printf("Torpedo missed!\n");
+                    return;
+                }
+                if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
+                    printf("Klingon destroyed\n");
+                    // Turn Klingon symbol into a blank symbol
+                    (*refGalaxy).coordinates[w][x][y][z] = ' ';
+                    // Decrement numKlingons
+                    (*refGalaxy).gVitals.numKlingons--;
+                    return;
+                }
+                else if ((*refGalaxy).coordinates[w][x][y][z] == '*') {
+                printf("Star at %d, %d absorbed torpedo energy\n", y+1, z+1);
+                return;
+                }
+                else if ((*refGalaxy).coordinates[w][x][y][z] == 'S') {
+                printf("Starbase destroyed\n");
+                (*refGalaxy).coordinates[w][x][y][z] = ' ';
+                // Decrement numStarbases
+                (*refGalaxy).gVitals.numStarbases--;
+                // TODO: So far this only decrements numStarbases, but if player destroys all 3 starbases some other stuff happens and game ends. Should that go in gameEnd or here? See Source Code 5360.
+                return;
+                }
+                else {
+                    z--;
+                    y--;
+                }
+            }
+            break;
+        case (5):               // DIRECTION 5: WEST
+            z--;
+            if (z > 0) {
+            printf("Torpedo Track:\n");
+            }
+            while (z >= 0) {
+                printf("            %d, %d\n", y+1, z+1);
+                if (z == 0) {
+                    printf("Torpedo missed!\n");
+                    return;
+                }
+                if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
+                    printf("Klingon destroyed\n");
+                    // Turn Klingon symbol into a blank symbol
+                    (*refGalaxy).coordinates[w][x][y][z] = ' ';
+                    // Decrement numKlingons
+                    (*refGalaxy).gVitals.numKlingons--;
+                    return;
+                }
+                else if ((*refGalaxy).coordinates[w][x][y][z] == '*') {
+                printf("Star at %d, %d absorbed torpedo energy\n", y+1, z+1);
+                return;
+                }
+                else if ((*refGalaxy).coordinates[w][x][y][z] == 'S') {
+                printf("Starbase destroyed\n");
+                (*refGalaxy).coordinates[w][x][y][z] = ' ';
+                // Decrement numStarbases
+                (*refGalaxy).gVitals.numStarbases--;
+                // TODO: So far this only decrements numStarbases, but if player destroys all 3 starbases some other stuff happens and game ends. Should that go in gameEnd or here? See Source Code 5360.
+                return;
+                }
+                else {
+                    z--;
+                }
+            }
+            break;
+        case (6):               // DIRECTION 6: SOUTHWEST
+            z--;
+            y++;
+                if ((y < 8) && (z > 0)) {
+                printf("Torpedo Track:\n");
+                }
+            while ((z >= 0) && (y < 8)) {
+                printf("            %d, %d\n", y+1, z+1);
+                if ((z == 0) || (y == 7)) {
+                    printf("Torpedo missed!\n");
+                    return;
+                }
+                if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
+                    printf("Klingon destroyed\n");
+                    // Turn Klingon symbol into a blank symbol
+                    (*refGalaxy).coordinates[w][x][y][z] = ' ';
+                    // Decrement numKlingons
+                    (*refGalaxy).gVitals.numKlingons--;
+                    return;
+                }
+                else if ((*refGalaxy).coordinates[w][x][y][z] == '*') {
+                printf("Star at %d, %d absorbed torpedo energy\n", y+1, z+1);
+                return;
+                }
+                else if ((*refGalaxy).coordinates[w][x][y][z] == 'S') {
+                printf("Starbase destroyed\n");
+                (*refGalaxy).coordinates[w][x][y][z] = ' ';
+                // Decrement numStarbases
+                (*refGalaxy).gVitals.numStarbases--;
+                // TODO: So far this only decrements numStarbases, but if player destroys all 3 starbases some other stuff happens and game ends. Should that go in gameEnd or here? See Source Code 5360.
+                return;
+                }
+                else {
+                    z--;
+                    y++;
+                }
+            }
+            break;
+        case (7):               // DIRECTION 7: SOUTH
+            y++;
+            if (y < 8) {
+            printf("Torpedo Track:\n");
+            }
+            while (y < 8) {
+                printf("            %d, %d\n", y+1, z+1);
+                if (y == 7) {
+                    printf("Torpedo missed!\n");
+                    return;
+                }
+                if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
+                    printf("Klingon destroyed\n");
+                    // Turn Klingon symbol into a blank symbol
+                    (*refGalaxy).coordinates[w][x][y][z] = ' ';
+                    // Decrement numKlingons
+                    (*refGalaxy).gVitals.numKlingons--;
+                    return;
+                }
+                else if ((*refGalaxy).coordinates[w][x][y][z] == '*') {
+                printf("Star at %d, %d absorbed torpedo energy\n", y+1, z+1);
+                return;
+                }
+                else if ((*refGalaxy).coordinates[w][x][y][z] == 'S') {
+                printf("Starbase destroyed\n");
+                (*refGalaxy).coordinates[w][x][y][z] = ' ';
+                // Decrement numStarbases
+                (*refGalaxy).gVitals.numStarbases--;
+                // TODO: So far this only decrements numStarbases, but if player destroys all 3 starbases some other stuff happens and game ends. Should that go in gameEnd or here? See Source Code 5360.
+                return;
+                }
+                else {
+                    y++;
+                }
+            }
+            break;
+        case (8):               // DIRECTION 8: SOUTHEAST
+            y++;
+            z++;
+            if ((z < 8) && (y < 8)) {
+            printf("Torpedo Track:\n");
+            }
+            while ((z < 8) && (z < 8)) {
+                printf("            %d, %d\n", y+1, z+1);
+                if ((y == 7) || (z == 7)) {
+                    printf("Torpedo missed!\n");
+                    return;
+                }
+                if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
+                    printf("Klingon destroyed\n");
+                    // Turn Klingon symbol into a blank symbol
+                    (*refGalaxy).coordinates[w][x][y][z] = ' ';
+                    // Decrement numKlingons
+                    (*refGalaxy).gVitals.numKlingons--;
+                    return;
+                }
+                else if ((*refGalaxy).coordinates[w][x][y][z] == '*') {
+                printf("Star at %d, %d absorbed torpedo energy\n", y+1, z+1);
+                return;
+                }
+                else if ((*refGalaxy).coordinates[w][x][y][z] == 'S') {
+                printf("Starbase destroyed\n");
+                (*refGalaxy).coordinates[w][x][y][z] = ' ';
+                // Decrement numStarbases
+                (*refGalaxy).gVitals.numStarbases--;
+                // TODO: So far this only decrements numStarbases, but if player destroys all 3 starbases some other stuff happens and game ends. Should that go in gameEnd or here? See Source Code 5360.
+                return;
+                }
+                else {
+                    y++;
+                    z++;
+                }
+            }
+            break;
+        default:               // If none of these cases
+            printf("Error. Unrecognized command.\n");
+            break;
     }
-    // TODO: Finish torpedo command. See source code 4850
     return;
 }
 
-void exeSHE(struct Galaxy *refGalaxy) {                                 // TODO: implement SHE subroutine
+void exeSHE(struct Galaxy *refGalaxy) {
     int x;
     printf("'SHE' command executed.\n\n");
     if((*refGalaxy).gVitals.eDamage[7] < 0) {
@@ -659,6 +911,7 @@ void exeSHE(struct Galaxy *refGalaxy) {                                 // TODO:
     printf("ENERGY AVAILABLE = %d\n", ((*refGalaxy).gVitals.eEnergy + (*refGalaxy).enterprise.shields));
     printf("INPUT NUMBER OF UNITS TO SHIELDS? ");
     scanf("%d", &x);
+    getchar();      // To get rid of the extra newline in input buffer
     if(x < 0 || (*refGalaxy).enterprise.shields == x) {
       printf("\n<SHIELDS UNCHANGED>\n");
       return;
