@@ -650,7 +650,28 @@ void exeTOR(struct Galaxy *refGalaxy) {
 }
 
 void exeSHE(struct Galaxy *refGalaxy) {                                 // TODO: implement SHE subroutine
+    int x;
     printf("'SHE' command executed.\n\n");
+    if((*refGalaxy).gVitals.eDamage[7] < 0) {
+      printf("SHIELD CONTROL INOPERABLE\n");
+      return;
+    }
+    printf("ENERGY AVAILABLE = %d\n", ((*refGalaxy).gVitals.eEnergy + (*refGalaxy).enterprise.shields));
+    printf("INPUT NUMBER OF UNITS TO SHIELDS? ");
+    scanf("%d", &x);
+    if(x < 0 || (*refGalaxy).enterprise.shields == x) {
+      printf("\n<SHIELDS UNCHANGED>\n");
+      return;
+    }
+    if(x <= ((*refGalaxy).gVitals.eEnergy + (*refGalaxy).enterprise.shields)) {
+      (*refGalaxy).gVitals.eEnergy = (*refGalaxy).gVitals.eEnergy + (*refGalaxy).enterprise.shields - x;
+      (*refGalaxy).enterprise.shields = x;
+      printf("DEFLECTOR CONTROL ROOM REPORT : \n");
+      printf("SHIELDS NOW AT %d UNITS PER YOUR COMMAND\n", (*refGalaxy).enterprise.shields);
+      return;
+    }
+    printf("SHIELD CONTROL REPORTS 'THIS IS NOT THE FEDEREATION TREASURY'\n");
+    printf("<SHIELDS UNCHANGED>\n");
     return;
 }
 
