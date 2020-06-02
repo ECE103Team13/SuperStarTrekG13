@@ -70,6 +70,7 @@ void exeTOR(struct Galaxy *refGalaxy);
 void exeSHE(struct Galaxy *refGalaxy);
 void exeXXX(struct Galaxy *refGalaxy);
 void exeDBG(struct Galaxy *refGalaxy);
+void KlingonsFire(struct Galaxy *refGalaxy);
 void strtrim(char* string, int n);
 void remNL(char* string, int n);
 void strToLower(char* string, int n);
@@ -101,7 +102,7 @@ struct Galaxy createGalaxy(void) {
     int numKlingons = 26;
     int numStars = 100;
     struct Galaxy _galaxy;
-    struct Enterprise theEnterprise;
+    //struct Enterprise theEnterprise;
     struct Starbase starbases;
     struct Klingon klingons;
 
@@ -174,45 +175,22 @@ struct Galaxy createGalaxy(void) {
         if ((_galaxy.coordinates[w][x][y][z] != 'S') && (_galaxy.coordinates[w][x][y][z] != 'K') && (_galaxy.coordinates[w][x][y][z] != 'E'))
         {
             _galaxy.coordinates[w][x][y][z] = '*';
-            // I don't think we need to save locations of stars elsewhere?
         }
     }
 
-                                                                    //Debug: Print map of galaxy, sector by sector:
-                                                             /*       for (int i = 0; i < 8; ++i)
-                                                                    {
-                                                                        for (int j = 0; j < 8; ++j)
-                                                                        {
-                                                                            printf("Sector %d, %d:\n", i, j);
-                                                                            for (int k = 0; k <8; ++k)
-                                                                            {
-                                                                                for (int l = 0; l <8; ++l)
-                                                                                {
-                                                                                    printf("%c ", _galaxy.coordinates[i][j][k][l]);
-                                                                                }
-                                                                                printf("\n");
-                                                                            }
-                                                                        }
-                                                                    }*/
-                                                                    //END Debug printf code
-
-
-    // Set up initial gameVitals for currentGame
-    //struct gameVitals currentGame;
-
+// Set up starting gameVitals for currentGame
 // All game vitals will count down to 0
 // If any game vital reaches 0, game will end.
     // TODO: I made eDamage an array of 8 items because there are 8 separate things that can be damaged. I hope this doesn't mess up the gVitals function here. We can make 8 individual variables but that seemed silly.
     for (int i = 0; i < 8; ++i) {
     _galaxy.gVitals.eDamage[i] = 1;
     }
-    _galaxy.gVitals.eEnergy = 10;
+    _galaxy.gVitals.eEnergy = 3000;
     _galaxy.gVitals.numStarbases = 3;
     _galaxy.gVitals.numKlingons = 26;
     _galaxy.gVitals.stardate = 26;
     _galaxy.gVitals.reputation = 2;
     _galaxy.gVitals.userQuit = false;
-
     return _galaxy;
 };
 
@@ -223,18 +201,15 @@ struct Enterprise createEnterprise(struct Galaxy *refGalaxy) {
         _enterprise.position[1] = 5;
         _enterprise.position[2] = 3;
         _enterprise.position[3] = 0;
-
-  //TODO: code to generate enterprise
-  //TODO: delete following temporary manual declaration once createEnterprise() is complete
+    // Set up initial conditions for enterprise
     for (int i = 0; i < 8; ++i) {
     _enterprise.damage[i] = 1;
     }
-  _enterprise.energy = 50.0;
-  _enterprise.shields = 15.0;
-  _enterprise.torpedoes = 4;
-  _enterprise.condition = YELLOW;
-  //END code to delete
-
+    _enterprise.energy = 3000.0;
+    _enterprise.shields = 0;
+    _enterprise.torpedoes = 10;
+    // TODO: Condition is RED if enterprise is in a sector with a klingon and no shields, GREEN if enterprise is in a sector with no klingons. Not sure YELLOW - but I would assume it's if enterprise is in a sector with klingon with shields? Is this the right place for Condition variable?
+    _enterprise.condition = RED;
   return _enterprise;
 };
 
@@ -504,6 +479,7 @@ void exeCOM(struct Galaxy *refGalaxy) {
             getchar();   // Extra getchar to get rid of newline in input buffer
             int Direction = 0;
             // Calculate direction
+            // TODO: These directions aren't correct, I need to get a big piece of paper and make a map to figure out how to calculate them. 1 is East, 3 is North, etc.
             if ((*refGalaxy).enterprise.position[0] < Q0) {
                 if ((*refGalaxy).enterprise.position[1] < Q1) {
                     Direction = 1;
@@ -945,6 +921,9 @@ void exeDBG(struct Galaxy *refGalaxy) {                                 // DEBUG
     printf("Shields:\t%4.1f\n", (*refGalaxy).enterprise.shields);
     printf("Torpedoes:\t%4d\n\n", (*refGalaxy).enterprise.torpedoes);
     return;
+}
+
+void KlingonsFire(struct Galaxy *refGalaxy) {           // TODO: Write function for when klingons fire on Enterprise (called by NAV, TOR, and PHA functions)
 }
 
 void strtrim(char* string, int n) {                                     // Checks through string for leading whitespace, then copies characters to the string start, then ends string after n chars
