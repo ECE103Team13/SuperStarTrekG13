@@ -606,6 +606,9 @@ void exeTOR(struct Galaxy *refGalaxy) {
             printf("Torpedo Track:\n");
             for (int i = z; i < 8; ++i) {
                 printf("            %d, %d\n", y+1, z+1);
+                if (z == 7) {
+                    printf("Torpedo missed!\n");
+                }
                 if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
                     printf("Klingon destroyed\n");
                     // Turn Klingon symbol into a blank symbol
@@ -623,7 +626,7 @@ void exeTOR(struct Galaxy *refGalaxy) {
                 (*refGalaxy).coordinates[w][x][y][z] = ' ';
                 // Decrement numStarbases
                 (*refGalaxy).gVitals.numStarbases--;
-                // TODO: This just decrements numStarbases, but if player destroys all 3 starbases some other stuff happens and game ends. Should that go in gameEnd or here? See Source Code 5360.
+                // TODO: So far this only decrements numStarbases, but if player destroys all 3 starbases some other stuff happens and game ends. Should that go in gameEnd or here? See Source Code 5360.
                 return;
                 }
                 else {
