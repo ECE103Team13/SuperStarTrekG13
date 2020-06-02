@@ -668,7 +668,7 @@ void exeSHE(struct Galaxy *refGalaxy) {                                 // TODO:
       return;
     }
     printf("SHIELD CONTROL REPORTS 'THIS IS NOT THE FEDEREATION TREASURY'\n");
-    printf("<SHIELDS UNCHANGED\n");
+    printf("<SHIELDS UNCHANGED>\n");
     return;
 }
 
