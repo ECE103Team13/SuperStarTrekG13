@@ -439,8 +439,8 @@ void exeCOM(struct Galaxy *refGalaxy) {
             printf("Phaser Control       %d\n", (*refGalaxy).gVitals.eDamage[3]);
             printf("Photon Tubes         %d\n", (*refGalaxy).gVitals.eDamage[4]);
             printf("Damage Control       %d\n", (*refGalaxy).gVitals.eDamage[5]);
-            printf("Shield Control       %d\n", (*refGalaxy).gVitals.eDamage[6]);
-            printf("Library Computer     %d\n", (*refGalaxy).gVitals.eDamage[7]);
+            printf("Shield Control       %f\n", (*refGalaxy).gVitals.eDamage[6]);
+            printf("Library Computer     %f\n", (*refGalaxy).gVitals.eDamage[7]);
             printf("\n\n");
             break;
         case ('2'):
@@ -542,9 +542,77 @@ void exeCOM(struct Galaxy *refGalaxy) {
     return;
 }
 
-void exePHA(struct Galaxy *refGalaxy) {                                 // TODO: implement PHA subroutine
-    printf("'PHA' command executed.\n\n");
+void exePHA(struct Galaxy *refGalaxy) {                                 // TODO: REVIEW BLOCK
+  int klingonCounter = 0;
+  int x, H, H1;
+/*    printf("'PHA' command executed.\n\n");
+    if((*refGalaxy).gVitals.eDamage < 0) {
+      printf("PHASERS INOPERATIVE\n\n");
+      return;
+    }
+    int a = (*refGalaxy).enterprise.position[0];
+    int b = (*refGalaxy).enterprise.position[1];
+    for (int y = 0; y < 8; y++) {
+        for (int z = 0; z < 8; z++) {
+            if ((*refGalaxy).coordinates[a][b][y][z] == 'K') {
+              klingonCounter = klingonCounter + 1;
+            }
+        }
+    }
+    if(klingonCounter > 0) { //check if klingons are present in current quadrant
+          if((*refGalaxy).enterprise.damage[7] < 0) {
+            printf("COMPUTER FAILURE HAMPERS ACCURACY\n");
+          }
+          printf("PHASERS LOCKED ON TARGET\n");
+          do{
+            printf("ENERGY AVAILABLE = %f UNITS\n", (*refGalaxy).enterprise.energy);
+            printf("NUMBER OF UNITS TO FIRE? ");
+            scanf("%f", &x);
+            if(x <= 0) {
+              return;
+            }
+          }while((*refGalaxy).enterprise.energy - x < 0);
+          (*refGalaxy).enterprise.energy = (*refGalaxy).enterprise.energy - x;
+          if((*refGalaxy).enterprise.damage[6] < 0) {
+            x = x * rand()%1;
+          }
+          else {
+            H1 = x / klingonCounter;
+            for(int i = 0; i < 8; ++i) {
+              for(int j; j < 8; ++j) {
+                if((*refGalaxy).coordinates[a][b][i][j] != 'K') {
+                  continue;
+                }
+                else if((*refGalaxy).coordinates[a][b][i][j] == 'K') {
+                  H = (H1 / FND(0) * (rand() + 2));
+                  if(H > (.15 * (*refGalaxy).klingons.position)) {
+                    k[i][3] = k[i][3] - H;
+                    printf("UNIT HIT ON KLINGON AT SECTOR %d,%d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]));
+                    if(k[i][3] <= 0) {
+                      printf("*** KLINGON DESTROYED ***");
+                      klingonCounter = klingonCounter - 1;
+                      (*refGalaxy).gVitals.numKlingons = (*refGalaxy).gVitals.numKlingons - 1;
+                      Z1 = k[i][1];
+                      Z2 = k[i][2];
+                      k[i][3] = 0;
+                      G(Q1,Q2) = G(Q1,Q2) - 100;
+                      Z(Q1,Q2) = G(Q1,Q2);
+                    }
+                    printf("SENSORS SHOW %d UNITS REMAINING", k[i][3]);
+                  }
+                  else {
+                    printf("SENSORS SHOW NO DAMAGE TO ENEMY AT SECTOR %d, %d",(*refGalaxy).Klingons.position[0], (*refGalaxy).enterprise.position[1]));
+                  }
+                }
+            }
+        }
+      return;
+    }
+    printf("SCIENCE OFFICER SPOCK REPORTS 'SENSORS SHOW NO ENEMY SHIPS'");
+    printf("                                IN THIS QUADRANT'");
+    */
     return;
+
 }
 
 void exeTOR(struct Galaxy *refGalaxy) {
@@ -878,29 +946,30 @@ void exeTOR(struct Galaxy *refGalaxy) {
 }
 
 void exeSHE(struct Galaxy *refGalaxy) {
+  //User input for amount of energy to allocate to shields
     int x;
     printf("'SHE' command executed.\n\n");
-    if((*refGalaxy).gVitals.eDamage[7] < 0) {
-      printf("SHIELD CONTROL INOPERABLE\n");
+    if((*refGalaxy).gVitals.eDamage[6] < 0) {
+      printf("SHIELD CONTROL INOPERABLE\n\n");
       return;
     }
-    printf("ENERGY AVAILABLE = %d\n", ((*refGalaxy).gVitals.eEnergy + (*refGalaxy).enterprise.shields));
+    printf("ENERGY AVAILABLE = %d\n", ((*refGalaxy).enterprise.energy + (*refGalaxy).enterprise.shields));
     printf("INPUT NUMBER OF UNITS TO SHIELDS? ");
     scanf("%d", &x);
     getchar();      // To get rid of the extra newline in input buffer
     if(x < 0 || (*refGalaxy).enterprise.shields == x) {
-      printf("\n<SHIELDS UNCHANGED>\n");
+      printf("\n<SHIELDS UNCHANGED>\n\n");
       return;
     }
-    if(x <= ((*refGalaxy).gVitals.eEnergy + (*refGalaxy).enterprise.shields)) {
-      (*refGalaxy).gVitals.eEnergy = (*refGalaxy).gVitals.eEnergy + (*refGalaxy).enterprise.shields - x;
+    if(x <= ((*refGalaxy).enterprise.energy + (*refGalaxy).enterprise.shields)) {
+      (*refGalaxy).enterprise.energy = (*refGalaxy).enterprise.energy + (*refGalaxy).enterprise.shields - x;
       (*refGalaxy).enterprise.shields = x;
       printf("DEFLECTOR CONTROL ROOM REPORT : \n");
-      printf("SHIELDS NOW AT %d UNITS PER YOUR COMMAND\n", (*refGalaxy).enterprise.shields);
+      printf("SHIELDS NOW AT %d UNITS PER YOUR COMMAND\n\n", (*refGalaxy).enterprise.shields);
       return;
     }
     printf("SHIELD CONTROL REPORTS 'THIS IS NOT THE FEDEREATION TREASURY'\n");
-    printf("<SHIELDS UNCHANGED>\n");
+    printf("<SHIELDS UNCHANGED>\n\n");
     return;
 }
 
