@@ -30,7 +30,7 @@ struct Starbase {
 
 struct Klingon {
   int position[4];
-  double damage;
+  double damage; //Should these have initial values?
   double energy;
   double shields;
 };
@@ -47,7 +47,7 @@ struct Enterprise {
 struct Galaxy {
   char coordinates[8][8][8][8];
   struct Starbase starbases[10];
-  struct Klingon klingons[10];
+  struct Klingon klingons[10]; //Should this be klingons[26]?
   struct Enterprise enterprise;
   struct gameVitals gVitals;
 };
@@ -146,6 +146,7 @@ struct Galaxy createGalaxy(void) {
         }
     // Place klingons in random positions in the galaxy (where there aren't any starbases)
     //'K' stands for klingon
+    //This looks like its only creating one klingon as it keeps overwritng klingons.position[0-3] (I think it should be klingons[k].position[0-3], and incrementing k), also wouldnt create number of klingons specified if it runs into a starbase or the enterprise
     for (int i = 0; i < numKlingons; ++i)
     {
         // Generate and save random number coordinates
