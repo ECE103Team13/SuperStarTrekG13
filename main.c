@@ -545,7 +545,8 @@ void exeCOM(struct Galaxy *refGalaxy) {
 void exePHA(struct Galaxy *refGalaxy) {                                 // TODO: REVIEW BLOCK
   int klingonCounter = 0;
   int x, H, H1;
-/*    printf("'PHA' command executed.\n\n");
+  /*
+    printf("'PHA' command executed.\n\n");
     if((*refGalaxy).gVitals.eDamage < 0) {
       printf("PHASERS INOPERATIVE\n\n");
       return;
@@ -585,7 +586,7 @@ void exePHA(struct Galaxy *refGalaxy) {                                 // TODO:
                 }
                 else if((*refGalaxy).coordinates[a][b][i][j] == 'K') {
                   H = (H1 / FND(0) * (rand() + 2));
-                  if(H > (.15 * (*refGalaxy).klingons.position)) {
+                  if(H > (.15 * (*refGalaxy).klingons.position[0])) {
                     k[i][3] = k[i][3] - H;
                     printf("UNIT HIT ON KLINGON AT SECTOR %d,%d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]));
                     if(k[i][3] <= 0) {
@@ -601,7 +602,7 @@ void exePHA(struct Galaxy *refGalaxy) {                                 // TODO:
                     printf("SENSORS SHOW %d UNITS REMAINING", k[i][3]);
                   }
                   else {
-                    printf("SENSORS SHOW NO DAMAGE TO ENEMY AT SECTOR %d, %d",(*refGalaxy).Klingons.position[0], (*refGalaxy).enterprise.position[1]));
+                    printf("SENSORS SHOW NO DAMAGE TO ENEMY AT SECTOR %d, %d",(*refGalaxy).klingons.position[0], (*refGalaxy).enterprise.position[1]);
                   }
                 }
             }
@@ -610,7 +611,7 @@ void exePHA(struct Galaxy *refGalaxy) {                                 // TODO:
     }
     printf("SCIENCE OFFICER SPOCK REPORTS 'SENSORS SHOW NO ENEMY SHIPS'");
     printf("                                IN THIS QUADRANT'");
-    */
+*/
     return;
 
 }
