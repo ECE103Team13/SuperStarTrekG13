@@ -409,8 +409,58 @@ void exeLRS(struct Galaxy *refGalaxy) {
 }
 
 void exeDAM(struct Galaxy *refGalaxy) {                                 // TODO: implement DAM subroutine
+    char input;
+    bool loop = true;
     printf("'DAM' command executed.\n\n");
-    return;
+    if((*refGalaxy).gVitals.eDamage[5] >= 0) {
+      printf("\nDEVICE     STATE OF REPAIR\n");
+      for(int R1 = 0; R1 < 8; ++R1) {
+        //GOSUB 8790 : PRINTG2$;LEFT$(Z$,25-LEN(G2$));INT(D(R1)*100)*.01
+      }
+    }
+    else {
+        printf("DAMAGE CONTROL REPORT NOT AVAILABLE\n");
+        return;
+    }
+    do {
+      if((*refGalaxy).gVitals.eDamage[0] < 0 || (*refGalaxy).gVitals.eDamage[0] > 0) {  //5720
+        (*refGalaxy).gVitals.eDamage[2] = 0;
+        for(int i = 0; i < 8; ++i) {
+          if((*refGalaxy).gVitals.eDamage[i] < 0) {
+            (*refGalaxy).gVitals.eDamage[2] = (*refGalaxy).gVitals.eDamage[2] + 1;
+          }
+        }
+        if((*refGalaxy).gVitals.eDamage[2] == 0) {
+          return;
+        }
+        (*refGalaxy).gVitals.eDamage[2] = (*refGalaxy).gVitals.eDamage[2] + (*refGalaxy).gVitals.eDamage[3];
+        if((*refGalaxy).gVitals.eDamage[2] >= 1) {
+          (*refGalaxy).gVitals.eDamage[2] = .9;
+        }
+        printf("\nTECHNICIANS STANDING BY TO EFFECT REPAIRS TO YOUR SHIP\n");
+        printf("EXTIMATED TIME TO REPAIR : %d STARDATES\n", (.01 * 100 * (*refGalaxy).gVitals.eDamage[2]));
+        printf("WILL YOU AUTHORIZE THE REPAIR ORDER? (Y/N) ");
+        scanf("%c", &input);
+        getchar();
+        if(input != 'Y' || input != 'y') {
+          return;
+        }
+        for(int i = 0; i < 8; ++i) {
+          if((*refGalaxy).gVitals.eDamage[i] < 0) {
+            (*refGalaxy).gVitals.eDamage[i] = 0;
+          }
+        }
+        (*refGalaxy).gVitals.stardate = (*refGalaxy).gVitals.stardate + (*refGalaxy).gVitals.eDamage[2] + 1;
+        printf("\nDEVICE     STATE OF REPAIR\n");
+        for(int R1 = 0; R1 < 8; ++R1) {
+          //GOSUB 8790 : PRINTG2$;LEFT$(Z$,25-LEN(G2$));INT(D(R1)*100)*.01
+        }
+      }
+      if((*refGalaxy).gVitals.eDamage[0] == 0) {
+        loop = false;
+      }
+    }while(loop == true);
+  return;
 }
 
 void exeCOM(struct Galaxy *refGalaxy) {
@@ -547,7 +597,7 @@ void exePHA(struct Galaxy *refGalaxy) {                                 // TODO:
   int x, H, H1;
   /*
     printf("'PHA' command executed.\n\n");
-    if((*refGalaxy).gVitals.eDamage < 0) {
+    if((*refGalaxy).gVitals.eDamage[3] < 0) {
       printf("PHASERS INOPERATIVE\n\n");
       return;
     }
