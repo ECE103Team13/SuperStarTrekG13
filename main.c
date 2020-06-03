@@ -408,7 +408,7 @@ void exeLRS(struct Galaxy *refGalaxy) {
     return;
 }
 
-void exeDAM(struct Galaxy *refGalaxy) {                                 // TODO: implement DAM subroutine
+void exeDAM(struct Galaxy *refGalaxy) {                                 // TODO: Review line 5920 in source and implement, peer review the function
     char input;
     bool loop = true;
     printf("'DAM' command executed.\n\n");
