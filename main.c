@@ -416,7 +416,7 @@ void exeDAM(struct Galaxy *refGalaxy) {                                 // TODO:
     if((*refGalaxy).gVitals.eDamage[5] >= 0) {
       printf("\nDEVICE     STATE OF REPAIR\n");
       for(int R1 = 0; R1 < 8; ++R1) {
-        //GOSUB 8790 : PRINTG2$;LEFT$(Z$,25-LEN(G2$));INT(D(R1)*100)*.01
+        //GOSUB 8790 : PRINTG2$;LEFT$(Z$,25-LEN(G2$));INT(D(R1)*100)*.01        //TODO: Figure out what this source line does
       }
     }
     else {
@@ -612,20 +612,20 @@ void exePHA(struct Galaxy *refGalaxy) {                                 // TODO:
         }
     }
     if(klingonCounter > 0) { //check if klingons are present in current quadrant
-          if((*refGalaxy).enterprise.damage[7] < 0) {
+          if((*refGalaxy).gVitals.eDamage[7] < 0) {
             printf("COMPUTER FAILURE HAMPERS ACCURACY\n");
           }
           printf("PHASERS LOCKED ON TARGET\n");
           do{
-            printf("ENERGY AVAILABLE = %f UNITS\n", (*refGalaxy).enterprise.energy);
+            printf("ENERGY AVAILABLE = %f UNITS\n", (*refGalaxy).gVitals.eEnergy);
             printf("NUMBER OF UNITS TO FIRE? ");
             scanf("%f", &x);
             if(x <= 0) {
               return;
             }
-          }while((*refGalaxy).enterprise.energy - x < 0);
-          (*refGalaxy).enterprise.energy = (*refGalaxy).enterprise.energy - x;
-          if((*refGalaxy).enterprise.damage[6] < 0) {
+          }while((*refGalaxy).gVitals.eEnergy - x < 0);
+          (*refGalaxy).gVitals.eEnergy = (*refGalaxy).gVitals.eEnergy - x;
+          if((*refGalaxy).gVitals.eDamage[6] < 0) {
             x = x * rand()%1;
           }
           else {
@@ -637,8 +637,8 @@ void exePHA(struct Galaxy *refGalaxy) {                                 // TODO:
                 }
                 else if((*refGalaxy).coordinates[a][b][i][j] == 'K') {
                   H = (H1 / FND(0) * (rand() + 2));
-                  if(H > (.15 * (*refGalaxy).klingons.position[0])) {
-                    k[i][3] = k[i][3] - H;
+                  if(H > (.15 * (*refGalaxy).klingons.position[0])) { //Check line
+                    k[i][3] = k[i][3] - H;                                                                                                                //Fix lines below
                     printf("UNIT HIT ON KLINGON AT SECTOR %d,%d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]));
                     if(k[i][3] <= 0) {
                       printf("*** KLINGON DESTROYED ***");
