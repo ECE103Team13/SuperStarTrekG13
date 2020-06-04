@@ -371,9 +371,57 @@ void exeNAV(struct Galaxy *refGalaxy) {                                 // TODO:
     return;
 }
 
-void exeSRS(struct Galaxy *refGalaxy) {                                 // TODO: implement SRS subroutine
-    printf("'SRS' command executed.\n\n");
-    return;
+void exeSRS(struct Galaxy *refGalaxy) {
+      // Check if SRS sensors are working
+      if ((*refGalaxy).enterprise.damage[1] < 0) {
+          printf("Short range sensors are out\n");
+          return;
+      }
+      printf("---------------------------------------------\n");
+      // Get current enterprise quadrant location from enterprise coordinates
+      int w = (*refGalaxy).enterprise.position[0];
+      int x = (*refGalaxy).enterprise.position[1];
+      int numKlingons = 0;
+      // Iterate through current quadrant and print whatever is in each sector
+      for (int y = 0; y < 8; y++) {
+          for (int z = 0; z < 8; z++) {
+              printf("  %c  ", (*refGalaxy).coordinates[w][x][y][z]);
+              // TODO: Update createGalaxy function line 126 to be one number less: 4, 5, 3, 0. Because of array indexing starting at 0 instead of 1.
+              // TODO: Update createGalaxy function to put >< around E, K, S, symbols. Also should starbase be a B? I think that's what it is in the game.
+              // Increment klingon counter to count how many klingons are in current sector
+              if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
+                  numKlingons++;
+              }
+          }
+          printf("\n");
+      }
+      printf("---------------------------------------------\n");
+      // Set condition to RED, YELLOW, or GREEN, depending on presence of Klingons and shields
+      if (numKlingons > 0) {
+          if ((*refGalaxy).enterprise.shields == 0) {
+              // TODO: Does enterprise.shields mean shields up or down? Or whether shields are available? Is shields a quantity or a Boolean? (I think it's a quantity, but it starts at 0 and it's taken from Energy.)
+              (*refGalaxy).enterprise.condition = RED;
+          }
+          else {
+              (*refGalaxy).enterprise.condition = YELLOW;
+          }
+      }
+      else {
+          (*refGalaxy).enterprise.condition = GREEN;
+      }
+      // TODO: Look at Source Code 6580 and 6620. Shields dropped for Docking. Why does this happen here in SRS? I haven't tried to implement these two lines because they baffled me.
+      printf("Stardate:               %d\n", (26-(*refGalaxy).gVitals.stardate)+2700);
+      printf("Condition:              %d\n", (*refGalaxy).enterprise.condition);
+      // TODO: I just looked up the lecture notes and it says printf displays the numeric value of an enum, not the text label. Is there another way to print the label, or we could do a three-branch if statement (if enterprise.condition == 0, printf"Red", etc). But if we have to do that, couldn't we instead store Condition as a string? I don't think Condition is a game-ending variable so I don't think we need it to have a numeric value.
+      printf("Quadrant:               %d,%d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]);
+      printf("Sector:                 %d,%d\n", (*refGalaxy).enterprise.position[2], (*refGalaxy).enterprise.position[3]);
+      printf("Photon Torpedoes:       %d\n", (*refGalaxy).enterprise.torpedoes);
+      printf("Total Energy:           %f\n", (*refGalaxy).enterprise.energy);
+      // TODO: What is the difference between gVitals.eEnergy and enterprise.energy? Which should we use here? Do we need them both?
+      printf("Shields:                %d\n", (*refGalaxy).enterprise.shields);
+      printf("Klingons Remaining:     %d\n\n", (*refGalaxy).gVitals.numKlingons);
+      return;
+  }
 }
 
 void exeLRS(struct Galaxy *refGalaxy) {
