@@ -12,7 +12,7 @@ typedef enum {GREEN, YELLOW, RED} Condition;
 
 //struct declarations:
 struct gameVitals {
-  double eDamage[8];
+  double eDamage;
   double eEnergy;
   int numStarbases;
   int numKlingons;
@@ -37,6 +37,7 @@ struct Klingon {
 
 struct Enterprise {
   int position[4];
+  int explored[8][8];
   double damage[8];
   double energy;
   double shields;
@@ -182,10 +183,7 @@ struct Galaxy createGalaxy(void) {
 // Set up starting gameVitals for currentGame
 // All game vitals will count down to 0
 // If any game vital reaches 0, game will end.
-    // TODO: I made eDamage an array of 8 items because there are 8 separate things that can be damaged. I hope this doesn't mess up the gVitals function here. We can make 8 individual variables but that seemed silly.
-    for (int i = 0; i < 8; ++i) {
-    _galaxy.gVitals.eDamage[i] = 1;
-    }
+    _galaxy.gVitals.eDamage = 0;
     _galaxy.gVitals.eEnergy = 3000;
     _galaxy.gVitals.numStarbases = 3;
     _galaxy.gVitals.numKlingons = 26;
@@ -202,9 +200,17 @@ struct Enterprise createEnterprise(struct Galaxy *refGalaxy) {
         _enterprise.position[1] = 5;
         _enterprise.position[2] = 3;
         _enterprise.position[3] = 0;
+    // Mark all quadrants as 0 (not explored yet) except for current quadrant
+    for (int i = 0; i < 8; i++) {
+        for (int k = 0; k < 8; k++) {
+            _enterprise.explored[i][k] = 0;
+        }
+    }
+    _enterprise.explored[4][5] = 1; // Mark current quadrant as Explored
+
     // Set up initial conditions for enterprise
     for (int i = 0; i < 8; ++i) {
-    _enterprise.damage[i] = 1;
+    _enterprise.damage[i] = 0;
     }
     _enterprise.energy = 3000.0;
     _enterprise.shields = 0;
@@ -234,10 +240,7 @@ struct Galaxy gameIntro(void) {                                             // d
 
 struct gameVitals getGameVitals(struct Galaxy *refGalaxy) {             //TODO: replace direct assignment of gVitals (see below)
     struct gameVitals GVout;
-
-// TODO: I'm sorry if I messed this up. I made eDamage an array of 8; I'm not sure what to do here to make an array work in this function. I commented it out here so the program can generally keep running until we fix this.
-//    GVout.eDamage = (*refGalaxy).gVitals.eDamage;
-
+    GVout.eDamage = (*refGalaxy).gVitals.eDamage;
     GVout.eEnergy = (*refGalaxy).gVitals.eEnergy;
     GVout.numKlingons = (*refGalaxy).gVitals.numKlingons;               // TODO: count number of starbases remaining (getGameVitals)
     GVout.numStarbases = (*refGalaxy).gVitals.numStarbases;             // TODO: count number of klingons remaining (getGameVitals)
@@ -375,15 +378,17 @@ void exeSRS(struct Galaxy *refGalaxy) {                                 // TODO:
 
 void exeLRS(struct Galaxy *refGalaxy) {
     printf("'LRS' command executed.\n\n");
-    if((*refGalaxy).gVitals.eDamage[2] == 0) {
+    if((*refGalaxy).enterprise.damage[2] < 0) {
         printf("Long Range Sensors are Inoperable.\n");
-        // TODO: Add other code here of what to do in this case (see Source Code line 4000)
+        return;
     }
     else {
         printf("Long Range Scan for Quadrant %d, %d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]);
         printf("---------------------------\n");
         for (int w = (*refGalaxy).enterprise.position[0]-1; w <= (*refGalaxy).enterprise.position[0]+1; w++) {
             for (int x = (*refGalaxy).enterprise.position[1]-1; x <= (*refGalaxy).enterprise.position[1]+1; x++) {
+                // Mark scanned quadrants as Explored
+                (*refGalaxy).enterprise.explored[w][x] = 1;
                 int klingonCounter = 0;
                 int starbaseCounter = 0;
                 int starCounter = 0;
@@ -409,21 +414,36 @@ void exeLRS(struct Galaxy *refGalaxy) {
     return;
 }
 
-void exeDAM(struct Galaxy *refGalaxy) {                                 // TODO: Review line 5920 in source and implement, peer review the function
+void exeDAM(struct Galaxy *refGalaxy) {
     char input;
-    bool loop = true;
+    int damageCounter = 0;
     printf("'DAM' command executed.\n\n");
-    if((*refGalaxy).gVitals.eDamage[5] >= 0) {
-      printf("\nDEVICE     STATE OF REPAIR\n");
-      for(int R1 = 0; R1 < 8; ++R1) {
-        //GOSUB 8790 : PRINTG2$;LEFT$(Z$,25-LEN(G2$));INT(D(R1)*100)*.01        //TODO: Figure out what this source line does
-      }
+    if((*refGalaxy).enterprise.damage[5] >= 0) {
+        printf("\nDEVICE         STATE OF REPAIR\n");
+        printf("Warp Engines         %d\n", (*refGalaxy).enterprise.damage[0]);
+        printf("Short Range Sensors  %d\n", (*refGalaxy).enterprise.damage[1]);
+        printf("Long Range Sensors   %d\n", (*refGalaxy).enterprise.damage[2]);
+        printf("Phaser Control       %d\n", (*refGalaxy).enterprise.damage[3]);
+        printf("Photon Tubes         %d\n", (*refGalaxy).enterprise.damage[4]);
+        printf("Damage Control       %d\n", (*refGalaxy).enterprise.damage[5]);
+        printf("Shield Control       %f\n", (*refGalaxy).enterprise.damage[6]);
+        printf("Library Computer     %f\n", (*refGalaxy).enterprise.damage[7]);
+        printf("\n\n");
     }
     else {
         printf("DAMAGE CONTROL REPORT NOT AVAILABLE\n");
         return;
     }
-    do {
+    for (int i = 0; i < 8; i++) {
+        // Check for damage on each of 8 items in enterprise.damage array
+        if ((*refGalaxy).enterprise.damage[i] < 0) {
+            damageCounter++;    // Increment damageCounter if any part is damaged
+        }
+    }
+
+    // TODO: I think the above section repeats this loop but I don't want to delete someone else's code without permission :)
+   /* do {
+
       if((*refGalaxy).gVitals.eDamage[0] < 0 || (*refGalaxy).gVitals.eDamage[0] > 0) {  //5720
         (*refGalaxy).gVitals.eDamage[2] = 0;
         for(int i = 0; i < 8; ++i) {
@@ -437,37 +457,32 @@ void exeDAM(struct Galaxy *refGalaxy) {                                 // TODO:
         (*refGalaxy).gVitals.eDamage[2] = (*refGalaxy).gVitals.eDamage[2] + (*refGalaxy).gVitals.eDamage[3];
         if((*refGalaxy).gVitals.eDamage[2] >= 1) {
           (*refGalaxy).gVitals.eDamage[2] = .9;
+        }*/
+    if (damageCounter <= 0) {       // if no parts of Enterprise are damaged
+        return;
+    }
+    printf("\nTECHNICIANS STANDING BY TO EFFECT REPAIRS TO YOUR SHIP\n");
+    printf("EXTIMATED TIME TO REPAIR : %d STARDATES\n", damageCounter);
+    printf("WILL YOU AUTHORIZE THE REPAIR ORDER? (Y/N) ");
+    scanf("%c", &input);
+    getchar();
+    if(input != 'Y' || input != 'y') {
+        return;
+    }
+    // Cycle through each item in enterprise.damage array
+    for(int i = 0; i < 8; ++i) {
+        // if any member in the array < 0, set it equal to 0 and decrement stardate counter
+        if((*refGalaxy).enterprise.damage[i] < 0) {
+            (*refGalaxy).enterprise.damage[i] = 0;
+            (*refGalaxy).gVitals.stardate--;
         }
-        printf("\nTECHNICIANS STANDING BY TO EFFECT REPAIRS TO YOUR SHIP\n");
-        printf("EXTIMATED TIME TO REPAIR : %d STARDATES\n", (.01 * 100 * (*refGalaxy).gVitals.eDamage[2]));
-        printf("WILL YOU AUTHORIZE THE REPAIR ORDER? (Y/N) ");
-        scanf("%c", &input);
-        getchar();
-        if(input != 'Y' || input != 'y') {
-          return;
-        }
-        for(int i = 0; i < 8; ++i) {
-          if((*refGalaxy).gVitals.eDamage[i] < 0) {
-            (*refGalaxy).gVitals.eDamage[i] = 0;
-          }
-        }
-        (*refGalaxy).gVitals.stardate = (*refGalaxy).gVitals.stardate + (*refGalaxy).gVitals.eDamage[2] + 1;
-        printf("\nDEVICE     STATE OF REPAIR\n");
-        for(int R1 = 0; R1 < 8; ++R1) {
-          //GOSUB 8790 : PRINTG2$;LEFT$(Z$,25-LEN(G2$));INT(D(R1)*100)*.01
-        }
-      }
-      if((*refGalaxy).gVitals.eDamage[0] == 0) {
-        loop = false;
-      }
-    }while(loop == true);
-  return;
+    }
+    return;
 }
 
-void exeCOM(struct Galaxy *refGalaxy) {
-    // Initialize counter variables to be used in executing computer commands
-    int starbaseCounter = 0;
 
+void exeCOM(struct Galaxy *refGalaxy) {
+    int starbaseCounter;
     printf("Computer active and awaiting command: ");
     char command = getchar();
     getchar(); // Extra getchar to get rid of the newline
@@ -475,8 +490,40 @@ void exeCOM(struct Galaxy *refGalaxy) {
     // Switch branching statement to execute each possible computer command
     switch(command) {
         case ('0'):
-            printf("case 0\n");
-            // TODO: This prints a map of the galaxy quadrants, with names, but the trick is that it only shows information (quantity of starbases, klingons, stars) for quadrants that have been long range scanned or visited. So we may need a new variable to keep track of that?
+            printf("\n   ----   ----   ----   ----   ----   ----   ----   ----\n");
+            // Count klingons, starbases, and stars in Explored quadrants
+            int klingonCounter = 0;
+            int starbaseCounter = 0;
+            int starCounter = 0;
+            for (int w = 0; w < 8; w++) {
+                for (int x = 0; x < 8; x++) {
+                    if ((*refGalaxy).enterprise.explored[w][x] == 1) {
+                        for (int y = 0; y < 8; y++) {
+                        for (int z = 0; z < 8; z++) {
+                            if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
+                                klingonCounter = klingonCounter + 1;
+                            }
+                            if ((*refGalaxy).coordinates[w][x][y][z] == 'S') {
+                                starbaseCounter = starbaseCounter + 1;
+                            }
+                            if ((*refGalaxy).coordinates[w][x][y][z] == '*') {
+                                starCounter = starCounter + 1;
+                            }
+                        }
+                        }
+                        // Print quantities of elements in explored quadrants
+                        printf("    %d%d%d", klingonCounter, starbaseCounter, starCounter);
+                        klingonCounter = 0;         // Set counters back to 0 before counting next quadrant
+                        starbaseCounter = 0;
+                        starCounter = 0;
+                        }
+                    // Otherwise print *** for unexplored quadrants
+                    else {
+                        printf("    ***");
+                    }
+                }
+                printf("\n   ----   ----   ----   ----   ----   ----   ----   ----\n");
+            }
             break;
         case ('1'):
             printf("\nStatus Report:\n");
@@ -484,14 +531,14 @@ void exeCOM(struct Galaxy *refGalaxy) {
             printf("Mission must be completed in %d stardates\n", (*refGalaxy).gVitals.stardate);
             printf("The Federation is maintaining %d starbases in the galaxy\n", (*refGalaxy).gVitals.numStarbases);
             printf("\nDevice           State of Repair\n");
-            printf("Warp Engines         %d\n", (*refGalaxy).gVitals.eDamage[0]);
-            printf("Short Range Sensors  %d\n", (*refGalaxy).gVitals.eDamage[1]);
-            printf("Long Range Sensors   %d\n", (*refGalaxy).gVitals.eDamage[2]);
-            printf("Phaser Control       %d\n", (*refGalaxy).gVitals.eDamage[3]);
-            printf("Photon Tubes         %d\n", (*refGalaxy).gVitals.eDamage[4]);
-            printf("Damage Control       %d\n", (*refGalaxy).gVitals.eDamage[5]);
-            printf("Shield Control       %f\n", (*refGalaxy).gVitals.eDamage[6]);
-            printf("Library Computer     %f\n", (*refGalaxy).gVitals.eDamage[7]);
+            printf("Warp Engines         %d\n", (*refGalaxy).enterprise.damage[0]);
+            printf("Short Range Sensors  %d\n", (*refGalaxy).enterprise.damage[1]);
+            printf("Long Range Sensors   %d\n", (*refGalaxy).enterprise.damage[2]);
+            printf("Phaser Control       %d\n", (*refGalaxy).enterprise.damage[3]);
+            printf("Photon Tubes         %d\n", (*refGalaxy).enterprise.damage[4]);
+            printf("Damage Control       %d\n", (*refGalaxy).enterprise.damage[5]);
+            printf("Shield Control       %d\n", (*refGalaxy).enterprise.damage[6]);
+            printf("Library Computer     %d\n", (*refGalaxy).enterprise.damage[7]);
             printf("\n\n");
             break;
         case ('2'):
@@ -595,37 +642,42 @@ void exeCOM(struct Galaxy *refGalaxy) {
 
 void exePHA(struct Galaxy *refGalaxy) {                                 // TODO: REVIEW BLOCK
   int klingonCounter = 0;
-  int x, H, H1;
-  /*
-    printf("'PHA' command executed.\n\n");
-    if((*refGalaxy).gVitals.eDamage[3] < 0) {
+  int unitsToFire, H, H1;
+    if((*refGalaxy).enterprise.damage[3] < 0) {
       printf("PHASERS INOPERATIVE\n\n");
       return;
     }
-    int a = (*refGalaxy).enterprise.position[0];
-    int b = (*refGalaxy).enterprise.position[1];
+    int w = (*refGalaxy).enterprise.position[0];
+    int x = (*refGalaxy).enterprise.position[1];
     for (int y = 0; y < 8; y++) {
         for (int z = 0; z < 8; z++) {
-            if ((*refGalaxy).coordinates[a][b][y][z] == 'K') {
+            if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
               klingonCounter = klingonCounter + 1;
             }
         }
     }
-    if(klingonCounter > 0) { //check if klingons are present in current quadrant
-          if((*refGalaxy).gVitals.eDamage[7] < 0) {
-            printf("COMPUTER FAILURE HAMPERS ACCURACY\n");
-          }
-          printf("PHASERS LOCKED ON TARGET\n");
+    if (klingonCounter <= 0) {      // If there are no klingons in quadrant, print message and return
+        printf("Science Officer Spock reports, ""Sensors show no enemy ships in this quadrant""");
+        return;
+    }
+    // Otherwise, find klingons and fire phasers
+    if((*refGalaxy).enterprise.damage[7] < 0) {     // Check if computer is damaged
+        printf("COMPUTER FAILURE HAMPERS ACCURACY\n");
+        }
+        printf("PHASERS LOCKED ON TARGET\n");
           do{
-            printf("ENERGY AVAILABLE = %f UNITS\n", (*refGalaxy).gVitals.eEnergy);
+            printf("ENERGY AVAILABLE = %d UNITS\n", (*refGalaxy).gVitals.eEnergy);
             printf("NUMBER OF UNITS TO FIRE? ");
-            scanf("%f", &x);
-            if(x <= 0) {
-              return;
+            scanf("%d", &unitsToFire);
+              // Check unitsToFire is greater than 0
+            if (unitsToFire <= 0) {
+                return;
             }
-          }while((*refGalaxy).gVitals.eEnergy - x < 0);
-          (*refGalaxy).gVitals.eEnergy = (*refGalaxy).gVitals.eEnergy - x;
-          if((*refGalaxy).gVitals.eDamage[6] < 0) {
+              // Check that there is enough energy available to fire requested unitsToFire
+          } while((*refGalaxy).gVitals.eEnergy - unitsToFire > 0);
+          (*refGalaxy).gVitals.eEnergy = (*refGalaxy).gVitals.eEnergy - unitsToFire;
+    // TODO: I need some help with this next part. I think what happens next depends on klingonCounter, unitsToFire, shields (I think because if shields are low and there are 2 klingons then one fires at the enterprise?). But I don't understand the Source Code math and I'm not sure how to figure it out on my own. Also sometimes the variable x shows up below - I changed x above to unitsToFire just to have more descriptive variable names and because I liked using [w][x][y][z] for position arrays.
+    /*if((*refGalaxy).enterprise.damage[6] < 0) {
             x = x * rand()%1;
           }
           else {
@@ -636,7 +688,7 @@ void exePHA(struct Galaxy *refGalaxy) {                                 // TODO:
                   continue;
                 }
                 else if((*refGalaxy).coordinates[a][b][i][j] == 'K') {
-                  H = (H1 / FND(0) * (rand() + 2));
+                  //H = (H1 / FND(0) * (rand() + 2));
                   if(H > (.15 * (*refGalaxy).klingons.position[0])) { //Check line
                     k[i][3] = k[i][3] - H;                                                                                                                //Fix lines below
                     printf("UNIT HIT ON KLINGON AT SECTOR %d,%d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]));
@@ -660,8 +712,6 @@ void exePHA(struct Galaxy *refGalaxy) {                                 // TODO:
         }
       return;
     }
-    printf("SCIENCE OFFICER SPOCK REPORTS 'SENSORS SHOW NO ENEMY SHIPS'");
-    printf("                                IN THIS QUADRANT'");
 */
     return;
 
@@ -674,7 +724,7 @@ void exeTOR(struct Galaxy *refGalaxy) {
         return;
     }
     // If photon tubes are damaged
-    if ((*refGalaxy).gVitals.eDamage[4] < 0) {
+    if ((*refGalaxy).enterprise.damage[4] < 0) {
         printf("Photon tubes are not operational.\n");
         return;
     }
@@ -1001,7 +1051,7 @@ void exeSHE(struct Galaxy *refGalaxy) {
   //User input for amount of energy to allocate to shields
     int x;
     printf("'SHE' command executed.\n\n");
-    if((*refGalaxy).gVitals.eDamage[6] < 0) {
+    if((*refGalaxy).enterprise.damage[6] < 0) {
       printf("SHIELD CONTROL INOPERABLE\n\n");
       return;
     }
