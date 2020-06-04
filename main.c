@@ -12,35 +12,35 @@ typedef enum {GREEN, YELLOW, RED} Condition;
 
 //struct declarations:
 struct gameVitals {
-  double eDamage;
-  double eEnergy;
+  int eDamage;
+  int eEnergy;
   int numStarbases;
   int numKlingons;
   int stardate;
-  double reputation;
+  int reputation;
   bool userQuit;
 };
 
 struct Starbase {
   int position[4];
-  double damage;
-  double energy;
-  double shields;
+  int damage;
+  int energy;
+  int shields;
 };
 
 struct Klingon {
   int position[4];
-  double damage; //Should these have initial values?
-  double energy;
-  double shields;
+  int damage; // TODO: Should these have initial values?
+  int energy;
+  int shields;
 };
 
 struct Enterprise {
   int position[4];
   int explored[8][8];
-  double damage[8];
-  double energy;
-  double shields;
+  int damage[8];
+  int energy;
+  int shields;
   int torpedoes;
   Condition condition;
 };
@@ -123,7 +123,7 @@ struct Galaxy createGalaxy(void) {
     }
 
     // Place the Enterprise in the galaxy:
-    _galaxy.coordinates[5][6][4][1] = 'E';
+    _galaxy.coordinates[4][5][3][0] = 'E';
 
     // Set up starbases randomly in the galaxy:
     for (int i = 0; i <numStarbases; ++i)
@@ -212,7 +212,7 @@ struct Enterprise createEnterprise(struct Galaxy *refGalaxy) {
     for (int i = 0; i < 8; ++i) {
     _enterprise.damage[i] = 0;
     }
-    _enterprise.energy = 3000.0;
+    _enterprise.energy = 3000;
     _enterprise.shields = 0;
     _enterprise.torpedoes = 10;
     // TODO: Condition is RED if enterprise is in a sector with a klingon and no shields, GREEN if enterprise is in a sector with no klingons. Not sure YELLOW - but I would assume it's if enterprise is in a sector with klingon with shields? Is this the right place for Condition variable?
@@ -233,6 +233,8 @@ struct Galaxy gameIntro(void) {                                             // d
   struct Galaxy newGalaxy;
   newGalaxy = createGalaxy();
   newGalaxy.enterprise = createEnterprise(&newGalaxy);
+    printf("Your orders are as follows:\nDestroy the %d Klingon warships which have invaded the galaxy before they can attack Federation Headquarters on Stardate %d. This gives you %d days. There are %d starbases in the galaxy for resupplying your ship.\n", newGalaxy.gVitals.numKlingons, ((26 - newGalaxy.gVitals.stardate)+2700), newGalaxy.gVitals.stardate, newGalaxy.gVitals.stardate);
+    // TODO: Write the text that says which quadrant it is and also "Combat Area Condition Red Shields Dangerously Low"
   exeSRS(&newGalaxy);
 
   return newGalaxy;
@@ -385,9 +387,18 @@ void exeSRS(struct Galaxy *refGalaxy) {
       // Iterate through current quadrant and print whatever is in each sector
       for (int y = 0; y < 8; y++) {
           for (int z = 0; z < 8; z++) {
+              if ((*refGalaxy).coordinates[w][x][y][z] == 'E') {
+                  printf(" <E> ");
+              }
+              else if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
+                  printf(" +K+ ");
+              }
+              else if ((*refGalaxy).coordinates[w][x][y][z] == 'S') {
+                  printf(" >B< ");
+              }
+              else {
               printf("  %c  ", (*refGalaxy).coordinates[w][x][y][z]);
-              // TODO: Update createGalaxy function line 126 to be one number less: 4, 5, 3, 0. Because of array indexing starting at 0 instead of 1.
-              // TODO: Update createGalaxy function to put >< around E, K, S, symbols. Also should starbase be a B? I think that's what it is in the game.
+              }
               // Increment klingon counter to count how many klingons are in current sector
               if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
                   numKlingons++;
@@ -413,16 +424,16 @@ void exeSRS(struct Galaxy *refGalaxy) {
       printf("Stardate:               %d\n", (26-(*refGalaxy).gVitals.stardate)+2700);
       printf("Condition:              %d\n", (*refGalaxy).enterprise.condition);
       // TODO: I just looked up the lecture notes and it says printf displays the numeric value of an enum, not the text label. Is there another way to print the label, or we could do a three-branch if statement (if enterprise.condition == 0, printf"Red", etc). But if we have to do that, couldn't we instead store Condition as a string? I don't think Condition is a game-ending variable so I don't think we need it to have a numeric value.
-      printf("Quadrant:               %d,%d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]);
-      printf("Sector:                 %d,%d\n", (*refGalaxy).enterprise.position[2], (*refGalaxy).enterprise.position[3]);
+      printf("Quadrant:               %d,%d\n", (*refGalaxy).enterprise.position[0]+1, (*refGalaxy).enterprise.position[1]+1);
+      printf("Sector:                 %d,%d\n", (*refGalaxy).enterprise.position[2]+1, (*refGalaxy).enterprise.position[3]+1);
       printf("Photon Torpedoes:       %d\n", (*refGalaxy).enterprise.torpedoes);
-      printf("Total Energy:           %f\n", (*refGalaxy).enterprise.energy);
+      printf("Total Energy:           %d\n", (*refGalaxy).enterprise.energy);
       // TODO: What is the difference between gVitals.eEnergy and enterprise.energy? Which should we use here? Do we need them both?
       printf("Shields:                %d\n", (*refGalaxy).enterprise.shields);
       printf("Klingons Remaining:     %d\n\n", (*refGalaxy).gVitals.numKlingons);
       return;
   }
-}
+
 
 void exeLRS(struct Galaxy *refGalaxy) {
     printf("'LRS' command executed.\n\n");
@@ -474,8 +485,8 @@ void exeDAM(struct Galaxy *refGalaxy) {
         printf("Phaser Control       %d\n", (*refGalaxy).enterprise.damage[3]);
         printf("Photon Tubes         %d\n", (*refGalaxy).enterprise.damage[4]);
         printf("Damage Control       %d\n", (*refGalaxy).enterprise.damage[5]);
-        printf("Shield Control       %f\n", (*refGalaxy).enterprise.damage[6]);
-        printf("Library Computer     %f\n", (*refGalaxy).enterprise.damage[7]);
+        printf("Shield Control       %d\n", (*refGalaxy).enterprise.damage[6]);
+        printf("Library Computer     %d\n", (*refGalaxy).enterprise.damage[7]);
         printf("\n\n");
     }
     else {
