@@ -6,6 +6,12 @@
 #include <time.h>
 
 #define MAX_INPUT_LENGTH 127
+#define GAME_NUM_KLINGONS 26
+#define GAME_NUM_STARBASES 3
+#define GAME_NUM_STARS 100
+#define GAME_INITIAL_ENERGY 3000
+#define GAME_INITIAL_STARDATE 2700
+#define GAME_STARDATE_LIMIT 26
 
 // enum declarations:
 typedef enum {GREEN, YELLOW, RED} Condition;
@@ -72,6 +78,7 @@ void exeSHE(struct Galaxy *refGalaxy);
 void exeXXX(struct Galaxy *refGalaxy);
 void exeDBG(struct Galaxy *refGalaxy);
 void KlingonsFire(struct Galaxy *refGalaxy);
+bool KlingonsInQuadrant(struct Galaxy* refGalaxy);
 void strtrim(char* string, int n);
 void remNL(char* string, int n);
 void strToLower(char* string, int n);
@@ -99,9 +106,9 @@ int main() {
 
 //function definitions:
 struct Galaxy createGalaxy(void) {
-    int numStarbases = 3;
-    int numKlingons = 26;
-    int numStars = 100;
+    int numStarbases = GAME_NUM_STARBASES;
+    int numKlingons = GAME_NUM_KLINGONS;
+    int numStars = GAME_NUM_STARS;
     struct Galaxy _galaxy;
     //struct Enterprise theEnterprise;
     struct Starbase starbases;
@@ -184,10 +191,10 @@ struct Galaxy createGalaxy(void) {
 // All game vitals will count down to 0
 // If any game vital reaches 0, game will end.
     _galaxy.gVitals.eDamage = 0;
-    _galaxy.gVitals.eEnergy = 3000;
-    _galaxy.gVitals.numStarbases = 3;
-    _galaxy.gVitals.numKlingons = 26;
-    _galaxy.gVitals.stardate = 26;
+    _galaxy.gVitals.eEnergy = GAME_INITIAL_ENERGY;
+    _galaxy.gVitals.numStarbases = numStarbases;
+    _galaxy.gVitals.numKlingons = numKlingons;
+    _galaxy.gVitals.stardate = GAME_INITIAL_STARDATE;
     _galaxy.gVitals.reputation = 2;
     _galaxy.gVitals.userQuit = false;
     return _galaxy;
@@ -196,10 +203,10 @@ struct Galaxy createGalaxy(void) {
 struct Enterprise createEnterprise(struct Galaxy *refGalaxy) {
   struct Enterprise _enterprise;
     // Place Enterprise in the middle of the galaxy
-        _enterprise.position[0] = 4;
-        _enterprise.position[1] = 5;
-        _enterprise.position[2] = 3;
-        _enterprise.position[3] = 0;
+        _enterprise.position[0] = 5;
+        _enterprise.position[1] = 6;
+        _enterprise.position[2] = 4;
+        _enterprise.position[3] = 1;
     // Mark all quadrants as 0 (not explored yet) except for current quadrant
     for (int i = 0; i < 8; i++) {
         for (int k = 0; k < 8; k++) {
@@ -233,14 +240,18 @@ struct Galaxy gameIntro(void) {                                             // d
   struct Galaxy newGalaxy;
   newGalaxy = createGalaxy();
   newGalaxy.enterprise = createEnterprise(&newGalaxy);
-    printf("Your orders are as follows:\nDestroy the %d Klingon warships which have invaded the galaxy before they can attack Federation Headquarters on Stardate %d. This gives you %d days. There are %d starbases in the galaxy for resupplying your ship.\n", newGalaxy.gVitals.numKlingons, ((26 - newGalaxy.gVitals.stardate)+2700), newGalaxy.gVitals.stardate, newGalaxy.gVitals.stardate);
+    printf("Your orders are as follows :\n");
+    printf("\tDestroy the %d Klingon warships which have invaded\n", newGalaxy.gVitals.numKlingons);
+    printf("\tthe galaxy before they can attack Federation Headquarters\n");
+    printf("\ton Stardate %d. This gives you %d days. There are\n", (newGalaxy.gVitals.stardate)+GAME_STARDATE_LIMIT, GAME_STARDATE_LIMIT);
+    printf("\t%d starbases in the galaxy for resupplying your ship.\n", newGalaxy.gVitals.numStarbases);
     // TODO: Write the text that says which quadrant it is and also "Combat Area Condition Red Shields Dangerously Low"
   exeSRS(&newGalaxy);
 
   return newGalaxy;
 }
 
-struct gameVitals getGameVitals(struct Galaxy *refGalaxy) {             //TODO: replace direct assignment of gVitals (see below)
+struct gameVitals getGameVitals(struct Galaxy *refGalaxy) {                 //TODO: replace direct assignment of gVitals (see below)
     struct gameVitals GVout;
     GVout.eDamage = (*refGalaxy).gVitals.eDamage;
     GVout.eEnergy = (*refGalaxy).gVitals.eEnergy;
@@ -320,22 +331,20 @@ bool gameEnd(struct Galaxy *refGalaxy) {
         return true;
       }
     }*/
-//}
 }
 
 void getCommand(struct Galaxy *refGalaxy) {
     char cmdString[MAX_INPUT_LENGTH];
     printf("Enter Command: ");                                                                          // Prompt user for command input
     fgets(cmdString, MAX_INPUT_LENGTH, stdin);
-    strtrim(cmdString, strlen(strtrim));
-    // Trim any leading spaces off the input
+    strtrim(cmdString, strlen(strtrim));                                                                // Trim any leading spaces off the input
     if ((strchr(cmdString, '?') != NULL) || ((strstr(cmdString, "HELP") != NULL))) {                    // Check for a few basic commands that might be indicating a request for help
             exeHLP(refGalaxy);                                                                          // if detected, execute help command
     } else {
         cmdString[3] = '\0';                                                                            // Truncate the command string to 3 characters
         strToUpper(cmdString, strlen(cmdString));                                                       // convert to uppercase
         if ((strcmp(cmdString, "HEL") == 0) || (strcmp(cmdString, "HLP") == 0)) { exeHLP(refGalaxy);    // Check for some more possible intended help commands; execute help if detected
-        } else if (strcmp(cmdString, "NAV") == 0) { exeNAV(refGalaxy);                                  // Otherwise, check for all other possible commands; execute detected command
+        } else if (strcmp(cmdString, "NAV") == 0) { exeNAV(refGalaxy);                                  // Otherwise, check for all other possible commands and execute if found
         } else if (strcmp(cmdString, "SRS") == 0) { exeSRS(refGalaxy);
         } else if (strcmp(cmdString, "LRS") == 0) { exeLRS(refGalaxy);
         } else if (strcmp(cmdString, "DAM") == 0) { exeDAM(refGalaxy);
@@ -353,7 +362,7 @@ void getCommand(struct Galaxy *refGalaxy) {
     }
 }
 
-void exeHLP(struct Galaxy *refGalaxy) {
+void exeHLP(struct Galaxy* refGalaxy) {
     printf("HELP MENU:\nEnter one of the following commands (without quotes):\n");
     printf("\t'NAV'\t(Navigation)\n");
     printf("\t'SRS'\t(Short Range Sensors)\n");
@@ -368,25 +377,26 @@ void exeHLP(struct Galaxy *refGalaxy) {
     return;
 }
 
-void exeNAV(struct Galaxy *refGalaxy) {                                 // TODO: implement NAV subroutine
+void exeNAV(struct Galaxy* refGalaxy) {                                     // TODO: implement NAV subroutine
     printf("'NAV' command executed.\n\n");
     return;
 }
 
-void exeSRS(struct Galaxy *refGalaxy) {
+void exeSRS(struct Galaxy* refGalaxy) {
       // Check if SRS sensors are working
       if ((*refGalaxy).enterprise.damage[1] < 0) {
           printf("Short range sensors are out\n");
           return;
-      }
+      } else if (KlingonsInQuadrant(refGalaxy)) { printf("\nCOMBAT AREA\tCONDITION RED\n"); }
+      if ((*refGalaxy).enterprise.shields <= 10) { printf("   SHIELDS DANGEROUSLY LOW\n"); }
       printf("---------------------------------------------\n");
       // Get current enterprise quadrant location from enterprise coordinates
       int w = (*refGalaxy).enterprise.position[0];
       int x = (*refGalaxy).enterprise.position[1];
       int numKlingons = 0;
       // Iterate through current quadrant and print whatever is in each sector
-      for (int y = 0; y < 8; y++) {
-          for (int z = 0; z < 8; z++) {
+      for (int y = 0; y<8; y++) {
+          for (int z = 0; z<8; z++) {
               if ((*refGalaxy).coordinates[w][x][y][z] == 'E') {
                   printf(" <E> ");
               }
@@ -404,7 +414,39 @@ void exeSRS(struct Galaxy *refGalaxy) {
                   numKlingons++;
               }
           }
-          printf("\n");
+          switch(y) {
+                char cond[10];
+                case 0:
+                    printf("\tStardate:\t\t%d\n", ((*refGalaxy).gVitals.stardate));
+                    break;
+                case 1:
+                    if ((*refGalaxy).enterprise.condition == GREEN) { strcpy(cond,"*GREEN*");
+                    } else if ((*refGalaxy).enterprise.condition == YELLOW) { strcpy(cond,"*YELLOW*");
+                    } else { strcpy(cond,"*RED*"); }
+                    printf("\tCondition:\t\t%s\n", cond);
+                    break;
+                case 2:
+                    printf("\tQuadrant:\t\t%d,%d\n", (*refGalaxy).enterprise.position[0]+1, (*refGalaxy).enterprise.position[1]+1);
+                    break;
+                case 3:
+                    printf("\tSector:\t\t\t%d,%d\n", (*refGalaxy).enterprise.position[2]+1, (*refGalaxy).enterprise.position[3]+1);
+                    break;
+                case 4:
+                    printf("\tPhoton Torpedoes:\t%d\n", (*refGalaxy).enterprise.torpedoes);
+                    break;
+                case 5:
+                    printf("\tTotal Energy:\t\t%d\n", (*refGalaxy).enterprise.energy);
+                    break;
+                case 6:
+                    printf("\tShields:\t\t%d\n", (*refGalaxy).enterprise.shields);
+                    break;
+                case 7:
+                    printf("\tKlingons Remaining:\t%d\n\n", (*refGalaxy).gVitals.numKlingons);
+                    break;
+                default:
+                    break;
+
+          }
       }
       printf("---------------------------------------------\n");
       // Set condition to RED, YELLOW, or GREEN, depending on presence of Klingons and shields
@@ -420,22 +462,10 @@ void exeSRS(struct Galaxy *refGalaxy) {
       else {
           (*refGalaxy).enterprise.condition = GREEN;
       }
-      // TODO: Look at Source Code 6580 and 6620. Shields dropped for Docking. Why does this happen here in SRS? I haven't tried to implement these two lines because they baffled me.
-      printf("Stardate:               %d\n", (26-(*refGalaxy).gVitals.stardate)+2700);
-      printf("Condition:              %d\n", (*refGalaxy).enterprise.condition);
-      // TODO: I just looked up the lecture notes and it says printf displays the numeric value of an enum, not the text label. Is there another way to print the label, or we could do a three-branch if statement (if enterprise.condition == 0, printf"Red", etc). But if we have to do that, couldn't we instead store Condition as a string? I don't think Condition is a game-ending variable so I don't think we need it to have a numeric value.
-      printf("Quadrant:               %d,%d\n", (*refGalaxy).enterprise.position[0]+1, (*refGalaxy).enterprise.position[1]+1);
-      printf("Sector:                 %d,%d\n", (*refGalaxy).enterprise.position[2]+1, (*refGalaxy).enterprise.position[3]+1);
-      printf("Photon Torpedoes:       %d\n", (*refGalaxy).enterprise.torpedoes);
-      printf("Total Energy:           %d\n", (*refGalaxy).enterprise.energy);
-      // TODO: What is the difference between gVitals.eEnergy and enterprise.energy? Which should we use here? Do we need them both?
-      printf("Shields:                %d\n", (*refGalaxy).enterprise.shields);
-      printf("Klingons Remaining:     %d\n\n", (*refGalaxy).gVitals.numKlingons);
       return;
   }
 
-
-void exeLRS(struct Galaxy *refGalaxy) {
+void exeLRS(struct Galaxy* refGalaxy) {
     printf("'LRS' command executed.\n\n");
     if((*refGalaxy).enterprise.damage[2] < 0) {
         printf("Long Range Sensors are Inoperable.\n");
@@ -473,7 +503,7 @@ void exeLRS(struct Galaxy *refGalaxy) {
     return;
 }
 
-void exeDAM(struct Galaxy *refGalaxy) {
+void exeDAM(struct Galaxy* refGalaxy) {
     char input;
     int damageCounter = 0;
     printf("'DAM' command executed.\n\n");
@@ -539,8 +569,7 @@ void exeDAM(struct Galaxy *refGalaxy) {
     return;
 }
 
-
-void exeCOM(struct Galaxy *refGalaxy) {
+void exeCOM(struct Galaxy* refGalaxy) {
     int starbaseCounter;
     printf("Computer active and awaiting command: ");
     char command = getchar();
@@ -699,7 +728,7 @@ void exeCOM(struct Galaxy *refGalaxy) {
     return;
 }
 
-void exePHA(struct Galaxy *refGalaxy) {                                 // TODO: REVIEW BLOCK
+void exePHA(struct Galaxy* refGalaxy) {                                 // TODO: REVIEW BLOCK
   int klingonCounter = 0;
   int unitsToFire, H, H1;
     if((*refGalaxy).enterprise.damage[3] < 0) {
@@ -776,7 +805,7 @@ void exePHA(struct Galaxy *refGalaxy) {                                 // TODO:
 
 }
 
-void exeTOR(struct Galaxy *refGalaxy) {
+void exeTOR(struct Galaxy* refGalaxy) {
     // If torpedoes are used up
     if ((*refGalaxy).enterprise.torpedoes < 1) {
         printf("All photon torpedoes expended.\n");
@@ -1106,7 +1135,7 @@ void exeTOR(struct Galaxy *refGalaxy) {
     return;
 }
 
-void exeSHE(struct Galaxy *refGalaxy) {
+void exeSHE(struct Galaxy* refGalaxy) {
   //User input for amount of energy to allocate to shields
     int x;
     printf("'SHE' command executed.\n\n");
@@ -1134,7 +1163,7 @@ void exeSHE(struct Galaxy *refGalaxy) {
     return;
 }
 
-void exeDBG(struct Galaxy *refGalaxy) {                                 // DEBUG: "secret" debug subroutine
+void exeDBG(struct Galaxy* refGalaxy) {                                 // DEBUG: "secret" debug subroutine
     printf("\n\tDEBUG MODE ACCESSED.\n\n");
     printf("GAME VITALS STATUS:\n");
     printf("Starbases remaining:\t%d\n", (*refGalaxy).gVitals.numStarbases);
@@ -1153,7 +1182,11 @@ void exeDBG(struct Galaxy *refGalaxy) {                                 // DEBUG
     return;
 }
 
-void KlingonsFire(struct Galaxy *refGalaxy) {           // TODO: Write function for when klingons fire on Enterprise (called by NAV, TOR, and PHA functions)
+void KlingonsFire(struct Galaxy* refGalaxy) {                           // TODO: Write function for when klingons fire on Enterprise (called by NAV, TOR, and PHA functions)
+}
+
+bool KlingonsInQuadrant(struct Galaxy* refGalaxy) {                     // TODO: Implement KlingonsInQuadrant()
+    return true;
 }
 
 void strtrim(char* string, int n) {                                     // Checks through string for leading whitespace, then copies characters to the string start, then ends string after n chars
