@@ -106,7 +106,6 @@ int main() {
 ///////////////// END MAIN /////////////////
 ////////////////////////////////////////////
 
-
 //function definitions:
 struct Galaxy createGalaxy(void) {
     srand((int)time(0));                                        // Seed rand function with current time
@@ -1168,6 +1167,7 @@ void exeDBG(struct Galaxy* refGalaxy) {                                         
     return;
 }
 
+<<<<<<< HEAD
 void setDest(int* _start, double dir, double dist, int* _destination) {             // Using starting coordinates, direction (NAV number), and distance, it sets destination coordinates accordingly
     int sStart[2] = {(_start[0] * 8 + _start[2]), (_start[1] * 8 + _start[3])};     // For simplicty of calculation, convert (Qx,Qy,Sx,Sy) format to an equivalent (Sx,Sy)
     int sEnd[2] = {sStart[0], sStart[1]};
@@ -1209,6 +1209,10 @@ double checkObstacles(int* _start, double dir, double dist, struct Galaxy* refGa
 }
 
 void KlingonsFire(struct Galaxy* refGalaxy) {                                       //TODO: Implement KlingonsFire() (called by NAV, TOR, and PHA functions)
+=======
+void KlingonsFire(struct Galaxy* refGalaxy) {                           // TODO: Write function for when klingons fire on Enterprise (called by NAV, TOR, and PHA functions)
+
+>>>>>>> d2c06f8a2e543d9c1f1cf82da944d87f39ffbd18
 }
 
 bool KlingonsInQuadrant(struct Galaxy* refGalaxy) {                                 //TODO: Implement KlingonsInQuadrant()
