@@ -31,14 +31,14 @@ struct gameVitals {
 
 struct Starbase {
   int position[4];
-  int damage;
+  double HP;
   int energy;
   int shields;
 };
 
 struct Klingon {
   int position[4];
-  int damage; // TODO: Should these have initial values?
+  double HP;
   int energy;
   int shields;
 };
@@ -128,7 +128,7 @@ struct Galaxy createGalaxy(void) {
     }
 
     // Place the Enterprise in the galaxy:
-    _galaxy.coordinates[5][6][4][1] = 'E';
+    //_galaxy.coordinates[5][6][4][1] = 'E';
 
     // Place starbases randomly in the galaxy:
     for (int i = 0; i<numStarbases; ++i) {
@@ -144,7 +144,8 @@ struct Galaxy createGalaxy(void) {
                 newSB.position[1] = x;
                 newSB.position[2] = y;
                 newSB.position[3] = z;
-                _galaxy.coordinates[w][x][y][z] = 'S';          // 'S' stands for starbase
+                //_galaxy.coordinates[w][x][y][z] = 'S';          // 'S' stands for starbase
+                newSB.HP = 1.0;
                 notPlaced = false;
             }
         }
@@ -165,7 +166,8 @@ struct Galaxy createGalaxy(void) {
                 newKlingon.position[1] = x;
                 newKlingon.position[2] = y;
                 newKlingon.position[3] = z;
-                _galaxy.coordinates[w][x][y][z] = 'K';          // 'K' stands for Klingon
+                //_galaxy.coordinates[w][x][y][z] = 'K';          // 'K' stands for Klingon
+                newKlingon.HP = 1.0;
                 notPlaced = false;
             }
         }
@@ -282,8 +284,8 @@ bool gameEnd(struct Galaxy *refGalaxy) {
         }
     }
 
-// Check each member of gVitals to see whether game ending conditions are met
-    //for(int i = 0; i < 5; ++i){
+        // Check each member of gVitals to see whether game ending conditions are met
+        //for(int i = 0; i < 5; ++i){
         // If stardate is 0 (time is up)
         if((*refGalaxy).gVitals.stardate == 0){
             char getInput[100] = {0};
@@ -295,13 +297,10 @@ bool gameEnd(struct Galaxy *refGalaxy) {
         }
         else if((*refGalaxy).gVitals.numStarbases == 0) {
                 printf("NO STARBASES REMAINING!\n");                    // TODO: Fix placeholder game end message for no starbases remaining (gameEnd)
-                //exit(0);                      // TODO: I changed this exit to return false
+                //exit(0);                                              // TODO: I changed this exit to return false
                 return false;
             }
-        else
-            {
-                return true;
-            }
+        else { return true; }                                           //TODO: Game
 }
 
 void getCommand(struct Galaxy *refGalaxy) {
@@ -325,7 +324,7 @@ void getCommand(struct Galaxy *refGalaxy) {
         } else if (strcmp(cmdString, "SHE") == 0) { exeSHE(refGalaxy);
         } else if (strcmp(cmdString, "DBG") == 0) { exeDBG(refGalaxy);                                  // DEBUG: 'DBG' == a "secret" debug option showing game data
         } else if (strcmp(cmdString, "XXX") == 0) { (*refGalaxy).gVitals.userQuit = true;               // If user chooses resign, trigger the 'userQuit' gameVital
-        } else { exeHLP(refGalaxy); }                                                                    // If no other command recognized, print help menu
+        } else { exeHLP(refGalaxy); }                                                                   // If no other command recognized, print help menu
     }
 }
 
@@ -470,8 +469,7 @@ void exeSRS(struct Galaxy* refGalaxy) {
       return;
   }
 
-void exeLRS(struct Galaxy* refGalaxy) {
-    printf("'LRS' command executed.\n\n");
+void exeLRS(struct Galaxy* refGalaxy) {                                             //
     if((*refGalaxy).enterprise.sysDamage[2] < 0) {
         printf("Long Range Sensors are Inoperable.\n");
         return;
@@ -1205,6 +1203,10 @@ double checkObstacles(int* _start, double dir, double dist, struct Galaxy* refGa
         if ((*refGalaxy).coordinates[chkCoords[0]][chkCoords[1]][chkCoords[2]][chkCoords[3]] != ' ') { return (i - 0.1); }
     }
     return dist;
+}
+
+double getDist(struct Galaxy* refGalaxy, int* destination) {                        //TODO: get distance from Enterprice
+
 }
 
 void KlingonsFire(struct Galaxy* refGalaxy) {                                       //TODO: Implement KlingonsFire() (called by NAV, TOR, and PHA functions)
