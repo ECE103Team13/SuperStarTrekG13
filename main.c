@@ -103,7 +103,6 @@ int main() {
 ///////////////// END MAIN /////////////////
 ////////////////////////////////////////////
 
-
 //function definitions:
 struct Galaxy createGalaxy(void) {
     int numStarbases = GAME_NUM_STARBASES;
@@ -529,24 +528,6 @@ void exeDAM(struct Galaxy* refGalaxy) {
             damageCounter++;    // Increment damageCounter if any part is damaged
         }
     }
-
-    // TODO: I think the above section repeats this loop but I don't want to delete someone else's code without permission :)
-   /* do {
-
-      if((*refGalaxy).gVitals.eDamage[0] < 0 || (*refGalaxy).gVitals.eDamage[0] > 0) {  //5720
-        (*refGalaxy).gVitals.eDamage[2] = 0;
-        for(int i = 0; i < 8; ++i) {
-          if((*refGalaxy).gVitals.eDamage[i] < 0) {
-            (*refGalaxy).gVitals.eDamage[2] = (*refGalaxy).gVitals.eDamage[2] + 1;
-          }
-        }
-        if((*refGalaxy).gVitals.eDamage[2] == 0) {
-          return;
-        }
-        (*refGalaxy).gVitals.eDamage[2] = (*refGalaxy).gVitals.eDamage[2] + (*refGalaxy).gVitals.eDamage[3];
-        if((*refGalaxy).gVitals.eDamage[2] >= 1) {
-          (*refGalaxy).gVitals.eDamage[2] = .9;
-        }*/
     if (damageCounter <= 0) {       // if no parts of Enterprise are damaged
         return;
     }
@@ -1183,6 +1164,7 @@ void exeDBG(struct Galaxy* refGalaxy) {                                 // DEBUG
 }
 
 void KlingonsFire(struct Galaxy* refGalaxy) {                           // TODO: Write function for when klingons fire on Enterprise (called by NAV, TOR, and PHA functions)
+
 }
 
 bool KlingonsInQuadrant(struct Galaxy* refGalaxy) {                     // TODO: Implement KlingonsInQuadrant()
