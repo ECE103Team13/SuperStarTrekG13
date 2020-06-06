@@ -20,7 +20,6 @@ typedef enum {GREEN, YELLOW, RED} Condition;
 
 //struct declarations:
 struct gameVitals {
-  //NOTE: eDamage removed from gameVitals
   int eEnergy;
   int numStarbases;
   int numKlingons;
@@ -46,7 +45,7 @@ struct Klingon {
 struct Enterprise {
   int position[4];
   int explored[8][8];
-  int sysDamage[8];                                         //NOTE: enterprise.damage[] renamed to: enterprise.sysDamage[]
+  int sysDamage[8];
   int energy;
   int shields;
   int torpedoes;
@@ -81,7 +80,7 @@ void exeXXX(struct Galaxy *refGalaxy);
 void exeDBG(struct Galaxy *refGalaxy);
 void setDest(int* _start, double dir, double dist, int* _destination);
 void KlingonsFire(struct Galaxy *refGalaxy);
-bool KlingonsInQuadrant(struct Galaxy* refGalaxy);
+int KlingonsInQuadrant(struct Galaxy* refGalaxy);
 void strtrim(char* string, int n);
 void remNL(char* string, int n);
 void strToLower(char* string, int n);
@@ -236,6 +235,8 @@ struct Galaxy gameIntro(void) {                                             // d
   printf("                    THE USS ENTERPRISE --- NCC-1701\n\n");
   printf("                        (Press Enter to begin)\n\n");
   getchar();                                                            // this empty getchar() simply holds the screen until user presses Enter
+
+  //TODO: GAME MANUAL
 
   struct Galaxy newGalaxy;
   newGalaxy = createGalaxy();
@@ -1176,7 +1177,11 @@ void setDest(int* _start, double dir, double dist, int* _destination) {         
     sDiff[1] = round(dist * 8 * sin(theta));
 
     if (((sStart[0] + sDiff[0]) > 64) || ((sStart[0] + sDiff[0]) < 1) || ((sStart[1] + sDiff[1]) > 64) || ((sStart[1] + sDiff[1]) < 1)) {
-        printf("Can't leave the galaxy!\n");                                        //TODO: find actual "leaving galaxy" message
+        printf("LT. UHURA REPORTS MESSAGE FROM STARFLEET COMMAND: \n");
+        printf("'PERMISSION TO ATTEMPT CROSSING OF GALACTIC PERIMETER\n");
+        printf("IS HEREBY *DENIED*. SHUT DOWN YOUR ENGINES.' CHIEF\n");
+        printf("ENGINEER SCOTT REPORTS 'WARP ENGINES SHUT DOWN AT\n");
+        printf("SECTOR %d,%d OF QUADRANT %d,%d'\n\n", _start[2],_start[3], _start[0],_start[1]);
         return;
     }
 
@@ -1205,16 +1210,18 @@ double checkObstacles(int* _start, double dir, double dist, struct Galaxy* refGa
     return dist;
 }
 
-double getDist(struct Galaxy* refGalaxy, int* destination) {                        //TODO: get distance from Enterprice
-
+double getDist(struct Galaxy* refGalaxy, int* destination) {                        //TODO: get distance from Enterprise
+    double yDist = abs(((*refGalaxy).enterprise.position[0]*8)+(*refGalaxy).enterprise.position[2]) - ((destination[0]*8)+destination[2]);
+    double xDist = abs(((*refGalaxy).enterprise.position[1]*8)+(*refGalaxy).enterprise.position[3]) - ((destination[1]*8)+destination[3]);
+    return (sqrt(pow(xDist,2) + pow(yDist,2)));
 }
 
 void KlingonsFire(struct Galaxy* refGalaxy) {                                       //TODO: Implement KlingonsFire() (called by NAV, TOR, and PHA functions)
 
 }
 
-bool KlingonsInQuadrant(struct Galaxy* refGalaxy) {                                 //TODO: Implement KlingonsInQuadrant()
-    return true;
+int KlingonsInQuadrant(struct Galaxy* refGalaxy) {                                  //TODO: Implement KlingonsInQuadrant()
+    return 0;
 }
 
 void strtrim(char* string, int n) {                                                 // Checks through string for leading whitespace, then copies characters to the string start, then ends string after n chars
