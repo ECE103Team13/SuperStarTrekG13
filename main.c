@@ -77,14 +77,20 @@ void exeTOR(struct Galaxy *refGalaxy);
 void exeSHE(struct Galaxy *refGalaxy);
 void exeXXX(struct Galaxy *refGalaxy);
 void exeDBG(struct Galaxy *refGalaxy);
+double getDist(struct Galaxy* refGalaxy, int* destination);
 void setDest(int* _start, double dir, double dist, int* _destination);
+double getDirection(struct Galaxy* refGalaxy, int* destination, double dist);
 void KlingonsFire(struct Galaxy *refGalaxy);
+void KlingonsFireMT(struct Galaxy* refGalaxy, double WS);
 struct Klingon* getNthClosestKlingon(struct Galaxy* refGalaxy, int n);
 int KlingonsInQuadrant(struct Galaxy* refGalaxy, int q0, int q1);
 void strtrim(char* string, int n);
 void remNL(char* string, int n);
 void strToLower(char* string, int n);
 void strToUpper(char* string, int n);
+void strinj(char* parstr, int parsiz, char* chldstr, int chldlen, int idx);
+void displayManual(void);
+
 
 ////////////////////////////////////////////
 //////////////// START MAIN ////////////////
@@ -107,7 +113,7 @@ int main() {
 struct Galaxy createGalaxy(void) {
     srand((int)time(0));                                        // Seed rand function with current time
     int numStarbases = GAME_NUM_STARBASES;
-    int numKlingons = GAME_NUM_KLINGONS;
+    int numKlingons = 0;
     int numStars = GAME_NUM_STARS;
     struct Galaxy _galaxy;
     struct Starbase starbases;
@@ -146,27 +152,57 @@ struct Galaxy createGalaxy(void) {
     }
 
     // Place Klingons randomly in the galaxy:
-    for (int i = 0; i<numKlingons; ++i) {
+    //for (int i = 0; i<numKlingons; ++i) {
+    // TODO: I changed this to a while loop hopefully to continue iterating UNTIL we have 26 klingons. Then ideally at the end of this sequence, numKlingons should = 26.
+    while (numKlingons <= GAME_NUM_KLINGONS) {
+
         struct Klingon newKlingon;
         bool notPlaced = true;
         while (notPlaced) {                                     // Assign random position:
-            int w = rand()%8 + 1;
-            int x = rand()%8 + 1;
-            int y = rand()%8 + 1;
-            int z = rand()%8 + 1;
+            //int w = rand()%8 + 1;
+            //int x = rand()%8 + 1;
+            // TODO: I changed this to iterate through 8x8 quadrants to make sure k could be placed in each quadrant
+            for (int w = 1; w < 9; w++) {                       // Iterate through every quadrant
+                for (int x = 1; x < 9; x++) {
 
-            if (_galaxy.coordinates[w][x][y][z] == ' ') {       // Check that spot is empty
-                newKlingon.position[0] = w;                     // Save location in klingons.position array
-                newKlingon.position[1] = x;
-                newKlingon.position[2] = y;
-                newKlingon.position[3] = z;
-                newKlingon.HP = 1.0;
-                newKlingon.energy = 100;
-                newKlingon.shields = 100;
-                notPlaced = false;
+            float chance = rand()%100;          // Generate random percentage
+            int klingonsInQuad = 0;           // Limit klingons in a given quadrant to 1, 2, or 3
+            if (chance > 95) {
+                klingonsInQuad = 3;
+                numKlingons = numKlingons + 3;
+            }
+            else if (chance > 90) {
+                klingonsInQuad = 2;
+                numKlingons = numKlingons + 2;
+            }
+            else if (chance > 80) {
+                klingonsInQuad = 1;
+                numKlingons = numKlingons + 1;
+            }
+            else {
+                klingonsInQuad = 0;
+            }
+                    // TODO: This does limit how many k are in a quadrant, BUT I can't tell if all 26 are being placed. I may have created new problems with this solution.
+            for (int j = 0; j < klingonsInQuad; ++j) {
+                int y = rand()%8 + 1;                           // Use rand() to choose a random sector in current quadrant
+                int z = rand()%8 + 1;
+                if (_galaxy.coordinates[w][x][y][z] == ' ') {       // Check that spot is empty
+                    newKlingon.position[0] = w;                     // Save location in klingons.position array
+                    newKlingon.position[1] = x;
+                    newKlingon.position[2] = y;
+                    newKlingon.position[3] = z;
+                    newKlingon.HP = 1.0;
+                    newKlingon.energy = 100;
+                    newKlingon.shields = 100;
+                    notPlaced = false;
+                }
+            }
+                    int i = 0;
+                    _galaxy.klingons[i] = newKlingon; // save completed klingon in galaxy.klingons array
+                    i++;
+                }
             }
         }
-        _galaxy.klingons[i] = newKlingon;                       // save completed klingon in galaxy.klingons array
     }
 
     // Place stars randomly in the galaxy:
@@ -229,16 +265,22 @@ struct Galaxy gameIntro(void) {                                             // d
   printf("                        (Press Enter to begin)\n\n");
   getchar();                                                            // this empty getchar() simply holds the screen until user presses Enter
 
-  //TODO: GAME MANUAL
+    // Ask user if they want to view game manual
+    printf("PRESS M TO VIEW THE GAME MANUAL BEFORE STARTING GAME\nOTHERWISE, PRESS ANY KEY TO BEGIN GAME\n");
+    char input = getchar();
+    getchar();      // extra getchar to get rid of newline
+    if ((input == 'm') || (input == 'M')) {
+        displayManual();
+    }
 
   struct Galaxy newGalaxy;
   newGalaxy = createGalaxy();
   newGalaxy.enterprise = createEnterprise(&newGalaxy);
-    printf("Your orders are as follows :\n");
-    printf("\tDestroy the %d Klingon warships which have invaded\n", newGalaxy.gVitals.numKlingons);
-    printf("\tthe galaxy before they can attack Federation Headquarters\n");
-    printf("\ton Stardate %4.0f. This gives you %d days. There are\n", (newGalaxy.gVitals.stardate)+GAME_STARDATE_LIMIT, GAME_STARDATE_LIMIT);
-    printf("\t%d starbases in the galaxy for resupplying your ship.\n", newGalaxy.gVitals.numStarbases);
+    printf("YOUR ORDERS ARE AS FOLLOWS :\n");
+    printf("\tDESTROY THE %d KLINGON WARSHIPS WHICH HAVE INVADED\n", newGalaxy.gVitals.numKlingons);
+    printf("\tTHE GALAXY BEFORE THEY CAN ATTACK FEDERATION HEADQUARTERS\n");
+    printf("\tON STARDATE %4.0f. THIS GIVES YOU %d DAYS. THERE ARE\n", (newGalaxy.gVitals.stardate)+GAME_STARDATE_LIMIT, GAME_STARDATE_LIMIT);
+    printf("\t%d STARBASES IN THE GALAXY FOR RESUPPLYING YOUR SHIP.\n", newGalaxy.gVitals.numStarbases);
   exeSRS(&newGalaxy);
 
   return newGalaxy;
@@ -316,15 +358,15 @@ void getCommand(struct Galaxy *refGalaxy) {
 
 void exeHLP(struct Galaxy* refGalaxy) {
     printf("Enter one of the following:\n");
-    printf("  NAV  (To set course)\n");
-    printf("  SRS  (For short range sensor scan)\n");
-    printf("  LRS  (For long range sensor scan)\n");
-    printf("  PHA  (To fire phasers)\n");
-    printf("  TOR  (To fire photon torpedoes)\n");
-    printf("  SHE  (To raise or lower shields)\n");
-    printf("  DAM  (For damage control reports)\n");
-    printf("  COM  (To call on library-computer)\n");
-    printf("  XXX  (To resign your command)\n\n");
+    printf("  NAV  (TO SET COURSE)\n");
+    printf("  SRS  (FOR SHORT RANGE SENSOR SCAN)\n");
+    printf("  LRS  (FOR LONG RANGE SENSOR SCAN)\n");
+    printf("  PHA  (TO FIRE PHASERS)\n");
+    printf("  TOR  (TO FIRE PHOTON TORPEDOS)\n");
+    printf("  SHE  (TO RAISE OR LOWER SHIELDS)\n");
+    printf("  DAM  (FOR DAMAGE CONTROL REPORTS)\n");
+    printf("  COM  (TO CALL ON LIBRARY COMPUTER)\n");
+    printf("  XXX  (TO RESIGN YOUR COMMAND)\n\n");
     return;
 }
 
@@ -392,6 +434,15 @@ void exeSRS(struct Galaxy* refGalaxy) {
     if ((*refGalaxy).enterprise.sysDamage[1] < 0) {
         printf("SHORT RANGE SENSORS ARE OUT\n");
         return;
+    /*
+        // Set condition to RED, YELLOW, or GREEN, depending on presence of Klingons and shields
+    if (numKlingons > 0) {
+    if ((*refGalaxy).enterprise.shields == 0) { (*refGalaxy).enterprise.condition = RED; }
+    else { (*refGalaxy).enterprise.condition = YELLOW; }
+    }
+    else { (*refGalaxy).enterprise.condition = GREEN; }
+        //TODO: The above "set condition" code should also happen in the NAV function. In fact, it might not belong here at all because the only time Condition changes is if the Enterprise moves or if Klingons are killed. So actually PHA and TOR need it too. But the condition should already be set when the SRS is executed. I'm going to comment it out and then try to find where it belongs in those other functions.
+       */
     } else {
         printf("\n");
         if (KlingonsInQuadrant( refGalaxy, (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]) > 0) { printf("\nCOMBAT AREA\tCONDITION RED\n"); }
@@ -418,6 +469,7 @@ void exeSRS(struct Galaxy* refGalaxy) {
                     ((*refGalaxy).klingons[i].position[0] == (*refGalaxy).enterprise.position[0])) {
                     if ((*refGalaxy).klingons[i].HP > 0) {                                                  // if living Klingon found, inject it into its character space on the canvas
                         char klingStr[5] = " +K+";                                                          //TODO: find out why extra klingons are showing up in SRS
+                        // TODO: Could the for loop a few lines up iterate 1 through 3 instead of 1 through 26? I think that would limit how many klingons show up in a quadrant, but if too many exist in the quadrant it doesn't solve that problem. I haven't found where certain numbers are assigned to certain quadrants yet.
                         strinj(srsStr[(*refGalaxy).klingons[i].position[2]], 49, klingStr, strlen(klingStr), ((*refGalaxy).klingons[i].position[3]-1) * 5);
                     }
                 }
@@ -440,53 +492,48 @@ void exeSRS(struct Galaxy* refGalaxy) {
         switch(y) {
             char cond[10];
             case 1:                                                                                         // print additional SRS readout info, according to current line
-                printf("\tStardate:\t\t%d\n", ((*refGalaxy).gVitals.stardate));
+                printf("\tSTARDATE:\t\t%d\n", ((*refGalaxy).gVitals.stardate));
                 break;
             case 2:
                 if ((*refGalaxy).enterprise.condition == GREEN)         { strcpy(cond,"*GREEN*");   }
                 else if ((*refGalaxy).enterprise.condition == YELLOW)   { strcpy(cond,"*YELLOW*");  }
                 else                                                    { strcpy(cond,"*RED*");     }
-                printf("\tCondition:\t\t%s\n", cond);
+                printf("\tCONDITION:\t\t%s\n", cond);
                 break;
             case 3:
-                printf("\tQuadrant:\t\t%d,%d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]);
+                printf("\tQUADRANT:\t\t%d,%d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]);
                 break;
             case 4:
-                printf("\tSector:\t\t\t%d,%d\n", (*refGalaxy).enterprise.position[2], (*refGalaxy).enterprise.position[3]);
+                printf("\tSECTOR:\t\t\t%d,%d\n", (*refGalaxy).enterprise.position[2], (*refGalaxy).enterprise.position[3]);
                 break;
             case 5:
-                printf("\tPhoton Torpedoes:\t%d\n", (*refGalaxy).enterprise.torpedoes);
+                printf("\tPHOTON TORPEDOES:\t%d\n", (*refGalaxy).enterprise.torpedoes);
                 break;
             case 6:
-                printf("\tTotal Energy:\t\t%d\n", (*refGalaxy).enterprise.energy);
+                printf("\tTOTAL ENERGY:\t\t%d\n", (*refGalaxy).enterprise.energy);
                 break;
             case 7:
-                printf("\tShields:\t\t%d\n", (*refGalaxy).enterprise.shields);
+                printf("\tSHIELDS:\t\t%d\n", (*refGalaxy).enterprise.shields);
                 break;
             case 8:
-                printf("\tKlingons Remaining:\t%d\n", (*refGalaxy).gVitals.numKlingons);
+                printf("\tKLINGONS REMAINING:\t%d\n", (*refGalaxy).gVitals.numKlingons);
                 break;
             default:
                 break;
         }
     }
     printf("---------------------------------------------\n");
-    // Set condition to RED, YELLOW, or GREEN, depending on presence of Klingons and shields
-    if (numKlingons > 0) {
-    if ((*refGalaxy).enterprise.shields == 0) { (*refGalaxy).enterprise.condition = RED; }
-    else { (*refGalaxy).enterprise.condition = YELLOW; }
-    }
-    else { (*refGalaxy).enterprise.condition = GREEN; }
+
     return;
 }
 
 void exeLRS(struct Galaxy* refGalaxy) {                                             //
     if((*refGalaxy).enterprise.sysDamage[2] < 0) {
-        printf("Long Range Sensors are Inoperable.\n");
+        printf("LONG RANGE SENSORS ARE INOPERABLE.\n");
         return;
     }
     else {
-        printf("Long Range Scan for Quadrant %d, %d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]);
+        printf("LONG RANGE SCAN FOR QUADRANT %d, %d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]);
         printf("  ---------------------    \n");
         for (int w = (*refGalaxy).enterprise.position[0]-1; w <= (*refGalaxy).enterprise.position[0]+1; w++) {
             for (int x = (*refGalaxy).enterprise.position[1]-1; x <= (*refGalaxy).enterprise.position[1]+1; x++) {
@@ -516,14 +563,14 @@ void exeDAM(struct Galaxy* refGalaxy) {
     int damageCounter = 0;
     if((*refGalaxy).enterprise.sysDamage[5] >= 0) {
         printf("\nDEVICE\t\t\t  STATE OF REPAIR\n");
-        printf("Warp Engines\t\t\t%d\n", (*refGalaxy).enterprise.sysDamage[0]);
-        printf("Short Range Sensors\t\t%d\n", (*refGalaxy).enterprise.sysDamage[1]);
-        printf("Long Range Sensors\t\t%d\n", (*refGalaxy).enterprise.sysDamage[2]);
-        printf("Phaser Control\t\t\t%d\n", (*refGalaxy).enterprise.sysDamage[3]);
-        printf("Photon Tubes\t\t\t%d\n", (*refGalaxy).enterprise.sysDamage[4]);
-        printf("Damage Control\t\t\t%d\n", (*refGalaxy).enterprise.sysDamage[5]);
-        printf("Shield Control\t\t\t%d\n", (*refGalaxy).enterprise.sysDamage[6]);
-        printf("Library-Computer\t\t%d\n", (*refGalaxy).enterprise.sysDamage[7]);
+        printf("WARP ENGINES\t\t\t%d\n", (*refGalaxy).enterprise.sysDamage[0]);
+        printf("SHORT RANGE SENSORS\t\t%d\n", (*refGalaxy).enterprise.sysDamage[1]);
+        printf("LONG RANGE SENSORS\t\t%d\n", (*refGalaxy).enterprise.sysDamage[2]);
+        printf("PHASER CONTROL\t\t\t%d\n", (*refGalaxy).enterprise.sysDamage[3]);
+        printf("PHOTON TUBES\t\t\t%d\n", (*refGalaxy).enterprise.sysDamage[4]);
+        printf("DAMAGE CONTROL\t\t\t%d\n", (*refGalaxy).enterprise.sysDamage[5]);
+        printf("SHIELD CONTROL\t\t\t%d\n", (*refGalaxy).enterprise.sysDamage[6]);
+        printf("LIBRARY - COMPUTER\t\t%d\n", (*refGalaxy).enterprise.sysDamage[7]);
         printf("\n\n");
     }
     else {
@@ -603,25 +650,25 @@ void exeCOM(struct Galaxy* refGalaxy) {
             }
             break;
         case ('1'):
-            printf("\nStatus Report:\n");
-            printf("Klingons Left: %d\n", (*refGalaxy).gVitals.numKlingons);
-            printf("Mission must be completed in %d stardates\n", (*refGalaxy).gVitals.stardate);
-            printf("The Federation is maintaining %d starbases in the galaxy\n", (*refGalaxy).gVitals.numStarbases);
-            printf("\nDevice           State of Repair\n");
-            printf("Warp Engines         %d\n", (*refGalaxy).enterprise.sysDamage[0]);
-            printf("Short Range Sensors  %d\n", (*refGalaxy).enterprise.sysDamage[1]);
-            printf("Long Range Sensors   %d\n", (*refGalaxy).enterprise.sysDamage[2]);
-            printf("Phaser Control       %d\n", (*refGalaxy).enterprise.sysDamage[3]);
-            printf("Photon Tubes         %d\n", (*refGalaxy).enterprise.sysDamage[4]);
-            printf("Damage Control       %d\n", (*refGalaxy).enterprise.sysDamage[5]);
-            printf("Shield Control       %d\n", (*refGalaxy).enterprise.sysDamage[6]);
-            printf("Library Computer     %d\n", (*refGalaxy).enterprise.sysDamage[7]);
+            printf("\STATUS REPORT:\n");
+            printf("KLINGONS LEFT: %d\n", (*refGalaxy).gVitals.numKlingons);
+            printf("MISSION MUST BE COMPLETED IN %d STARDATES\n", (*refGalaxy).gVitals.stardate);
+            printf("THE FEDERATION IS MAINTAINING %d STARBASES IN THE GALAXY\n", (*refGalaxy).gVitals.numStarbases);
+            printf("\nDEVICE           STATE OF REPAIR\n");
+            printf("WARP ENGINES         %d\n", (*refGalaxy).enterprise.sysDamage[0]);
+            printf("SHORT RANGE SENSORS  %d\n", (*refGalaxy).enterprise.sysDamage[1]);
+            printf("LONG RANGE SENSORS   %d\n", (*refGalaxy).enterprise.sysDamage[2]);
+            printf("PHASER CONTROL       %d\n", (*refGalaxy).enterprise.sysDamage[3]);
+            printf("PHOTON TUBES         %d\n", (*refGalaxy).enterprise.sysDamage[4]);
+            printf("DAMAGE CONTROL       %d\n", (*refGalaxy).enterprise.sysDamage[5]);
+            printf("SHIELD CONTROL       %d\n", (*refGalaxy).enterprise.sysDamage[6]);
+            printf("LIBRARY COMPUTER     %d\n", (*refGalaxy).enterprise.sysDamage[7]);
             printf("\n\n");
             break;
         case ('2'):
-            printf("From Enterprise to Klingon Battle Cruiser\n");
-            printf("Direction = \n");                                                                                       //TODO: check for INT direction values in COM, change to double
-            printf("Distance = \n");
+            printf("FROM ENTERPRISE TO KLINGON BATTLE CRUISER\n");
+            printf("DIRECTION = \n");                                                                                       //TODO: check for INT direction values in COM, change to double
+            printf("DISTANCE = \n");
             // TODO: Add code here to calculate distance. I'm not sure how they decide which klingon to calculate the distance to. Maybe the nearest one?
             break;
         case ('3'):
@@ -637,81 +684,41 @@ void exeCOM(struct Galaxy* refGalaxy) {
                     }
                 }
             }
-            printf("Mr. Spock reports, ""sensors show %d starbases in this quadrant.""\n", starbaseCounter);
+            printf("MR. SPOCK REPORTS, ""SENSORS SHOW %d STARBASES IN THIS QUADRANT.""\n", starbaseCounter);
             break;
         case ('4'):
-            printf("Direction/Distance Calculator\n");
-            printf("You are at quadrant %d, %d, sector %d, %d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1], (*refGalaxy).enterprise.position[2], (*refGalaxy).enterprise.position[3]);
+            printf("DIRECTION/DISTANCE CALCULATOR\n");
+            // Print current location
+            printf("YOU ARE AT QUADRANT %d, %d, SECTOR %d, %d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1], (*refGalaxy).enterprise.position[2], (*refGalaxy).enterprise.position[3]);
             // Ask user for destination coordinates
-            printf("Please enter \n    initial coordinates(x,y): \n");
-            float Q0;
-            float Q1;
-            float S0;
-            float S1;
-            scanf("%f,%f", &Q0, &Q1);
-            printf("    final coordinates(x,y): \n");
-            scanf("%f,%f", &S0, &S1);
+            printf("PLEASE ENTER \n\tINITIAL COORDINATES(X,Y): \n");
+            int destination[4];
+            scanf("%d,%d", &destination[0], &destination[1]);
+            printf("\tFINAL COORDINATES(X,Y): \n");
+            scanf("%d,%d", &destination[2], &destination[3]);
             getchar();   // Extra getchar to get rid of newline in input buffer
-            int Direction = 0;
-            // Calculate direction
-            // TODO: These directions aren't correct, I need to get a big piece of paper and make a map to figure out how to calculate them. 1 is East, 3 is North, etc.
-            if ((*refGalaxy).enterprise.position[0] < Q0) {
-                if ((*refGalaxy).enterprise.position[1] < Q1) {
-                    Direction = 1;
-                }
-                else if ((*refGalaxy).enterprise.position[1] == Q1) {
-                    Direction = 2;
-                }
-                else {
-                    Direction = 3;
-                }
-            }
-            else if ((*refGalaxy).enterprise.position[0] == Q0) {
-                if ((*refGalaxy).enterprise.position[1] < Q1) {
-                    Direction = 4;
-                }
-                else if ((*refGalaxy).enterprise.position[1] == Q1) {
-                    Direction = 5;
-                }
-                else {
-                    Direction = 6;
-                }
-            }
-            else {
-                if ((*refGalaxy).enterprise.position[1] < Q1) {
-                    Direction = 7;
-                }
-                else if ((*refGalaxy).enterprise.position[1] < Q1) {
-                    Direction = 8;
-                }
-                else {
-                        Direction = 9;
-                    }
-                }
-            // Calculate distance between current location and destination
-            // TODO: I used the Distance Formula to calculate the distance between 2 quadrants. But we actually need to calculate distance between specific sector in 1 quadrant and specific sector in another quadrant. This is more math than I can face right now - I'll come back to this.
-            float EQ0 = (*refGalaxy).enterprise.position[0];
-            float EQ1 = (*refGalaxy).enterprise.position[1];
-            float ES0 = (*refGalaxy).enterprise.position[2];
-            float ES1 = (*refGalaxy).enterprise.position[3];
-            float Distance = sqrt(pow((EQ0 - Q0),2) + pow((EQ1 - Q1), 2));
-            printf("Direction = %d\n", Direction);
-            printf("Distance = %f\n", Distance);
+            // Call functions to calculate distance and direction
+            double distance = getDist(refGalaxy, destination);
+            double direction = getDirection(refGalaxy, destination, distance);
+            // Print distance and direction to screen
+            printf("DIRECTION = %f\n", direction);
+            printf("DISTANCE = %f\n", distance);
+
             break;
         case ('5'):
-            printf("                        The Galaxy\n");
+            printf("                        THE GALAXY\n");
             printf("    1      2      3      4      5      6      7      8\n");
-            printf("1           Antares          |           Sirius\n");
-            printf("2           Rigel            |           Deneb\n");
-            printf("3           Procyon          |           Capella\n");
-            printf("4           Vega             |           Betelgeuse\n");
-            printf("5           Canopus          |           Aldebaran\n");
-            printf("6           Altair           |           Regulus\n");
-            printf("7           Sagittarius      |           Arcturus\n");
-            printf("8           Pollux           |           Spica\n");
+            printf("1           ANTARES          |           SIRIUS\n");
+            printf("2           RIGEL            |           DENEB\n");
+            printf("3           PROCYON          |           CAPELLA\n");
+            printf("4           VEGA             |           BETELGEUSE\n");
+            printf("5           CANOPUS          |           ALDEBARAN\n");
+            printf("6           ALTAIR           |           REGULUS\n");
+            printf("7           SAGITTARIUS      |           ARCTURUS\n");
+            printf("8           POLLUX           |           SPICA\n");
             break;
         default:
-            printf("Unrecognized command. Enter 0 - 5.\n");
+            printf("UNRECOGNIZED COMMAND. ENTER 0 - 5.\n");
             break;
     }
     return;
@@ -724,16 +731,9 @@ void exePHA(struct Galaxy* refGalaxy) {                                         
       printf("PHASERS INOPERATIVE\n\n");
       return;
     }
-    int w = (*refGalaxy).enterprise.position[0];
-    int x = (*refGalaxy).enterprise.position[1];
-    for (int y = 0; y < 8; y++) {
-        for (int z = 0; z < 8; z++) {
-            if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
-              klingonCounter = klingonCounter + 1;
-            }
-        }
-    }
-    if (klingonCounter <= 0) {      // If there are no klingons in quadrant, print message and return
+    // Check whether there are klingons in this quadrant
+    int KlingonCount = KlingonsInQuadrant(refGalaxy, (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]);
+    if (KlingonCount <= 0) {      // If there are no klingons in quadrant, print message and return
         printf("SCIENCE OFFICER SPOCK REPORTS 'SENSORS SHOW NO ENEMY SHIPS\n IN THIS QUADRANT'\n");
         return;
     }
@@ -797,43 +797,44 @@ void exePHA(struct Galaxy* refGalaxy) {                                         
 void exeTOR(struct Galaxy* refGalaxy) {
     // If torpedoes are used up
     if ((*refGalaxy).enterprise.torpedoes < 1) {
-        printf("All photon torpedoes expended.\n");
+        printf("ALL PHOTON TORPEDOES EXPENDED.\n");
         return;
     }
     // If photon tubes are damaged
     if ((*refGalaxy).enterprise.sysDamage[4] < 0) {
-        printf("Photon tubes are not operational.\n");
+        printf("PHOTON TUBES ARE NOT OPERATIONAL.\n");
         return;
     }
-    printf("Input photon torpedo course (1-8): ");
-    int course = 0;
-    scanf("%d", &course);
+    printf("INPUT PHOTON TORPEDO COURSE (1-9): ");
+    float course = 0.0;
+    scanf("%f", &course);
     getchar();   // Get extra newline character from input buffer
-    if ((course < 1) || (course > 8)) {
-        printf("Ensign Chekov reports, ""Incorrect course data, sir!""\n");
+    if ((course < 1) || (course > 9)) {
+        printf("ENSIGN CHEKOV REPORTS, ""INCORRECT COURSE DATA, SIR!""\n");
         return;
     }
     // Decrement numberTorpedos:
     (*refGalaxy).enterprise.torpedoes--;
+    // TODO: Change torpedo function here. Direction is a float, not an int, so case/switch statement is inappropriate.
     // Assign coordinates to current position of enterprise
     int w = (*refGalaxy).enterprise.position[0];
     int x = (*refGalaxy).enterprise.position[1];
     int y = (*refGalaxy).enterprise.position[2];
     int z = (*refGalaxy).enterprise.position[3];
-    switch (course) {
+    /*switch (course) {
         case (1):           // Direction 1: EAST
             z++;
             if (z < 8) {
-            printf("Torpedo Track:\n");
+            printf("TORPEDO TRACK:\n");
             }
             while (z < 8) {
                 printf("            %d, %d\n", y+1, z+1);
                 if (z == 7) {
-                    printf("Torpedo missed!\n");
+                    printf("TORPEDO MISSED!\n");
                     return;
                 }
                 if ((*refGalaxy).coordinates[w][x][y][z] == 'K') {
-                    printf("Klingon destroyed\n");
+                    printf("KLINGON DESTROYED\n");
                     // Turn Klingon symbol into a blank symbol
                     (*refGalaxy).coordinates[w][x][y][z] = ' ';
                     // Decrement numKlingons
@@ -841,11 +842,11 @@ void exeTOR(struct Galaxy* refGalaxy) {
                     return;
                 }
                 else if ((*refGalaxy).coordinates[w][x][y][z] == '*') {
-                printf("Star at %d, %d absorbed torpedo energy\n", y+1, z+1);
+                printf("STAR AT %d, %d ABSORBED TORPEDO ENERGY\n", y+1, z+1);
                 return;
                 }
                 else if ((*refGalaxy).coordinates[w][x][y][z] == 'S') {
-                printf("Starbase destroyed\n");
+                printf("STARBASE DESTROYED\n");
                 (*refGalaxy).coordinates[w][x][y][z] = ' ';
                 // Decrement numStarbases
                 (*refGalaxy).gVitals.numStarbases--;
@@ -1121,13 +1122,13 @@ void exeTOR(struct Galaxy* refGalaxy) {
             printf("Error. Unrecognized command.\n");
             break;
     }
+     */
     return;
 }
 
 void exeSHE(struct Galaxy* refGalaxy) {
   //User input for amount of energy to allocate to shields
     int x;
-    printf("'SHE' command executed.\n\n");
     if((*refGalaxy).enterprise.sysDamage[6] < 0) {
       printf("SHIELD CONTROL INOPERABLE\n\n");
       return;
@@ -1155,25 +1156,26 @@ void exeSHE(struct Galaxy* refGalaxy) {
 void exeDBG(struct Galaxy* refGalaxy) {                                             // DEBUG: "secret" debug subroutine
     printf("\n\tDEBUG MODE ACCESSED.\n\n");
     printf("GAME VITALS STATUS:\n");
-    printf("Starbases remaining:\t%d\n", (*refGalaxy).gVitals.numStarbases);
-    printf("Klingons remaining:\t%d\n", (*refGalaxy).gVitals.numKlingons);
-    printf("Klingons in Quadrant:\t%d\n", KlingonsInQuadrant(refGalaxy,(*refGalaxy).enterprise.position[0],(*refGalaxy).enterprise.position[1]));
-    printf("Stardate\t\t%d\n", (*refGalaxy).gVitals.stardate);
-    printf("User has quit:\t\t");
-    if ((*refGalaxy).gVitals.userQuit) { printf("True\n\n");
-    } else { printf("False\n\n"); }
+    printf("STARBASES REMAINING:\t%d\n", (*refGalaxy).gVitals.numStarbases);
+    printf("KLINGONS REMAINING:\t%d\n", (*refGalaxy).gVitals.numKlingons);
+    printf("KLINGONS IN QUADRANT:\t%d\n", KlingonsInQuadrant(refGalaxy,(*refGalaxy).enterprise.position[0],(*refGalaxy).enterprise.position[1]));
+    printf("STARDATE\t\t%d\n", (*refGalaxy).gVitals.stardate);
+    printf("USER HAS QUIT:\t\t");
+    if ((*refGalaxy).gVitals.userQuit) { printf("TRUE\n\n");
+    } else { printf("FALSE\n\n"); }
     printf("\nENTERPRISE STATUS:\n");
-    printf("Position-\n  Quadrant:\t(%d,%d)\n  Sector:\t(%d,%d)\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1], (*refGalaxy).enterprise.position[2], (*refGalaxy).enterprise.position[3]);
-    printf("Energy:\t\t%4.1f\n", (*refGalaxy).enterprise.energy);
-    printf("Shields:\t%4.1f\n", (*refGalaxy).enterprise.shields);
-    printf("Torpedoes:\t%4d\n\n", (*refGalaxy).enterprise.torpedoes);
-    printf("NthClosest test:\n");
+    printf("POSITION-\n  QUADRANT:\t(%d,%d)\n  SECTOR:\t(%d,%d)\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1], (*refGalaxy).enterprise.position[2], (*refGalaxy).enterprise.position[3]);
+    printf("ENERGY:\t\t%4.1f\n", (*refGalaxy).enterprise.energy);
+    printf("SHIELDS:\t%4.1f\n", (*refGalaxy).enterprise.shields);
+    printf("TORPEDOES:\t%4d\n\n", (*refGalaxy).enterprise.torpedoes);
+    printf("N-TH CLOSEST TEST:\n");
     if (KlingonsInQuadrant(refGalaxy,(*refGalaxy).enterprise.position[0],(*refGalaxy).enterprise.position[1]) > 0) { getNthClosestKlingon(refGalaxy,1); }
     if (KlingonsInQuadrant(refGalaxy,(*refGalaxy).enterprise.position[0],(*refGalaxy).enterprise.position[1]) > 0) { getNthClosestKlingon(refGalaxy,2); }
     if (KlingonsInQuadrant(refGalaxy,(*refGalaxy).enterprise.position[0],(*refGalaxy).enterprise.position[1]) > 0) { getNthClosestKlingon(refGalaxy,KlingonsInQuadrant(refGalaxy,(*refGalaxy).enterprise.position[0],(*refGalaxy).enterprise.position[1])); }
     printf("\n");
     return;
 }
+
 
 void setDest(int* _start, double dir, double dist, int* _destination) {             // Using starting coordinates, direction (NAV number), and distance, it sets destination coordinates accordingly
     int sStart[2] = {(_start[0] * 8 + _start[2]), (_start[1] * 8 + _start[3])};     // For simplicity of calculation, convert (Qx,Qy,Sx,Sy) format to an equivalent (Sx,Sy)
@@ -1208,6 +1210,13 @@ void setDest(int* _start, double dir, double dist, int* _destination) {         
     return;
 }
 
+double getDirection(struct Galaxy* refGalaxy, int* destination, double dist) {             // Using starting coordinates, direction, and destination, calculates direction
+   // TODO: Write this function. I think it calculates an angle?
+    double direction = 0;
+    return direction;
+}
+
+
 double checkObstacles(int* _start, double dir, double dist, struct Galaxy* refGalaxy) {         // iterates through parameters' travel path to check for obstacles, returns furthest good coordinate if found
     for (double i=0.1; i<=dist; i+=0.1) {
         int chkCoords[4] = {0, 0, 0, 0};
@@ -1225,9 +1234,9 @@ double getDist(struct Galaxy* refGalaxy, int* destination) {
 
 // CLUES:
 //
-// • N=INT(W1*8+.5) : IF E-N>=0 THEN 2590                                                       (Where E=energy, W1=warp speed)
+// ï¿½ N=INT(W1*8+.5) : IF E-N>=0 THEN 2590                                                       (Where E=energy, W1=warp speed)
 //
-// • H=INT((K(I,3)/FND(1))*(2+RND(1))) : S=S-H : K(I,3)=K(I,3)/(3+RND(0))                       (Klingon firing equation)
+// ï¿½ H=INT((K(I,3)/FND(1))*(2+RND(1))) : S=S-H : K(I,3)=K(I,3)/(3+RND(0))                       (Klingon firing equation)
 
 void KlingonsFireMT(struct Galaxy* refGalaxy, double WS) {                                      //TODO: Klingon firing behavior when player flies through their occupied quadrant
     int klingonsHere = KlingonsInQuadrant(refGalaxy, (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[0]);
@@ -1275,7 +1284,8 @@ struct Klingon* getNthClosestKlingon(struct Galaxy* refGalaxy, int n) {         
     return &((*refGalaxy).klingons[(int)distIs[n-1][1]]);                                       // return the pointer to the klingon that matches the specified precedence
 }
 
-int qsortByDist() {
+int qsortByDist(int coordinates[2]) {
+    return coordinates[2];
 }
 
 void KlingonsFire(struct Galaxy* refGalaxy) {                                                   //TODO: Klingon firing behavior when player fires on them or performs other actions
@@ -1337,5 +1347,16 @@ void strToLower(char* string, int n) {                                          
 
 void strToUpper(char* string, int n) {                                              // Loops through string parameter, changing each index to its uppercase version
     for (int i=0; i<n; i++) { string[i] = toupper(string[i]); }
+    return;
+}
+
+void displayManual(void) {
+    printf("1. You are the captain of the starship ""Enterprise"" with a mission to seek and destroy a fleet of Klingon warships (usually about 17) which are menacing the United Federation of Planets. You have a specified number of stardates in which to complete your mission. You also have two or three Federation Starbases for resupplying your ship.\n\n2. You will be assigned a starting position somewhere in the galaxy. The galaxy is divided into an 8 x 8 quadrant grid. The astronomical name of a quadrant is called out upon entry into a new region. (See ""Quadrant Nomenclature."") Each quadrant is further divided into an 8 x 8 section grid.\n\n3/ On a section diagram, the following symbols are used:\n\n\t<E>\tEnterprise\t\t>!<\tStarbase\n\t+K+\tKlingon\t\t\t*\tStar\n\n4. You have eight commands available to you. (A detailed description of each command is given in the program instructions.)\n\n\tNAV\tNavigate the Starship by setting course and warp engine speed.\n\tSRS\tShort-range sensor scan (one quadrant)\n\tLRS\tLong-range sensor scan (9 quadrants)\n\tPHA\tPhaser control (energy gun)\n\tTOR\tPhoton torpedo control\n\tSHE\tShield control (protects against phaser fire)\n\tDAM\tDamage and state-of-repair report\n\tCOM\tCall library computer\n\n5. Library computer options are as follows (more complete descriptions are in program instructions):\n\n\t0\tCumulative galactic record\n\t1\tStatus report\n\t2\tPhoton torpedo course data\n\t3\tStarbase navigation data\n\t4\tDirection/distance calculator\n\t5\tQuadrant nomenclature map\n\n6. Certain reports on the ship's status are made by officers of the Enterprise who appeared on the original TV show - Spock, Scott, Uhura, Chekov, etc.\n\n7. Klingons are non-stationary within their quadrants. If you try to maneuver on then, they will move and fire on you.\n\n8. Firing and damage notes:\n\n\tA. Phaser fire diminishes with increased distance between combatants.\n\tB. If a Klingon zaps you hard enough (relative to your shield strength) he will generally cause damage to some part of your ship with an appropriate ""Damage Control"" report resulting.\n\tC. If you don't zap a Klingon hard enough (relative to his shield strength) you won't damage him at all. Your sensors will tell the story.\n\tD. Damage control will let you know when out-of-commission devices have been completely repaired.\n\n9. Your engines will automatically shut down if you should attempt to leave the galaxy, or if you should try to maneuver through a star, a Starbase, or - heaven help you - a Klingon warship.\n\n10. In a pinch, or if you should miscalculate slightly, some shield control energy will be automatically diverted to warp engine control (if your shields are operational!)./n/n11. While you're docked at a Starbase, a team of technicians can repair your ship (if you're willing for the mto spend the time required - and the repairmen always underestimate...)\n\n12. If, to save maneuvering time toward the end of the gane, you should cold-bloddedly destroy a Starbase, you get a nasty note from Starfleet Command. If you destroy your last Starbase, you lose the game! (For those who think this is too harsh a penalty, delete lines 5360-5390, and you'll just get a ""you dum-dum"" type message on all future status reports.)\n\n13. End game logic has been ""cleaned up"" in several spots, and it is possible to get a new command after successfully completing your mission (or, after resigning your old one).\n\n");
+           // TODO: "Usually about 17 Klingons! So there's a MAX of 26 but not necessarily always 26?!!!
+           // TODO: Please see note 10.
+           // TODO: Please see note 11 about decrementing Stardate if repairs happen
+           // TODO: Please see note 12. I think this explains the "reputation" factor. Which makes me think it's not a game vital but just a nicer option than losing the game?
+           // TODO: Also RE note 12, I left in the "lines 5360-5390" part so we could refer to it, but let's maybe update those line numbers to make it relevant to our code, or take that part about deleting lines out entirely?
+            // TODO: I deleted notes 14 and 15 because they were hardware-specific (alarm bells on a Westinghouse 1600 and information about chain instructions. Interesting but not relevant to us.
     return;
 }
