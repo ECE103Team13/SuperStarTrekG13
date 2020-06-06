@@ -79,7 +79,7 @@ void exeXXX(struct Galaxy *refGalaxy);
 void exeDBG(struct Galaxy *refGalaxy);
 double getDist(struct Galaxy* refGalaxy, int* destination);
 void setDest(int* _start, double dir, double dist, int* _destination);
-double getDirection(struct Galaxy* refGalaxy, int* destination, double dist);
+double getDirection(struct Galaxy* refGalaxy, int* destination);
 void KlingonsFire(struct Galaxy *refGalaxy);
 void KlingonsFireMT(struct Galaxy* refGalaxy, double WS);
 struct Klingon* getNthClosestKlingon(struct Galaxy* refGalaxy, int n);
@@ -699,7 +699,8 @@ void exeCOM(struct Galaxy* refGalaxy) {
             getchar();   // Extra getchar to get rid of newline in input buffer
             // Call functions to calculate distance and direction
             double distance = getDist(refGalaxy, destination);
-            double direction = getDirection(refGalaxy, destination, distance);
+            double direction = getDirection(refGalaxy, destination);
+                    // TODO: I messed these up. It's not getting directions from the Enterprise to somewhere else, but from one random spot to another random spot. WHY?!
             // Print distance and direction to screen
             printf("DIRECTION = %f\n", direction);
             printf("DISTANCE = %f\n", distance);
@@ -1210,9 +1211,36 @@ void setDest(int* _start, double dir, double dist, int* _destination) {         
     return;
 }
 
-double getDirection(struct Galaxy* refGalaxy, int* destination, double dist) {             // Using starting coordinates, direction, and destination, calculates direction
-   // TODO: Write this function. I think it calculates an angle?
-    double direction = 0;
+double getDirection(struct Galaxy* refGalaxy, int* destination) {             // Using starting coordinates, direction, and destination, calculates direction
+    int y = ((destination[0]*8)+destination[2]) - (((*refGalaxy).enterprise.position[0]*8)+(*refGalaxy).enterprise.position[2]);
+    int x = ((destination[1]*8)+destination[3]) - (((*refGalaxy).enterprise.position[1]*8)+(*refGalaxy).enterprise.position[3]);
+    double theta = 0;       // Initialize theta to hold angle of direction
+    // Figure out what quadrant theta falls into and calculate angle
+    if (x >= 0) {
+        if (y >= 0) {
+            theta = asin((double)y/x);
+        }
+        else if (y < 0) {
+            y = abs(y);
+            theta = asin((double)y/x);
+            theta = 360 - theta;
+        }
+    }
+    else if (x < 0) {
+        if (y >= 0) {
+            x = abs(x);
+            theta = asin((double)y/x);
+            theta = 180 - theta;
+        }
+        else {
+            x = abs(x);
+            y = abs(y);
+            theta = asin((double)y/x);
+            theta = 180 + theta;
+        }
+    }
+    // Convert angle into 1-9 game notation (1 = East = positive x-axis)
+    double direction = (theta / 45) + 1;
     return direction;
 }
 
