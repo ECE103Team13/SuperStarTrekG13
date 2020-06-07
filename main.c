@@ -78,11 +78,12 @@ void exeXXX(struct Galaxy *refGalaxy);
 void exeDBG(struct Galaxy *refGalaxy);
 void exeSLR(struct Galaxy* refGalaxy);
 double getDist(struct Galaxy* refGalaxy, int* destination);
-void setDest(int* _start, double dir, double dist, int* _destination);
+int setDest(int* _start, double dir, double dist, int* _destination);
 double getDirection(double yD, double xD);
 double checkObstacles(int* _start, double dir, double dist, struct Galaxy* refGalaxy);
 void KlingonsFire(struct Galaxy *refGalaxy);
 void KlingonsFireMT(struct Galaxy* refGalaxy, double WS);
+void KlingonsMove(struct Galaxy* refGalaxy);
 int StarbasesInQuadrant(struct Galaxy* refGalaxy, int* Q);
 int KlingonsInQuadrant(struct Galaxy* refGalaxy, int* Q);
 struct Klingon* getNthClosestKlingon(struct Galaxy* refGalaxy, int n);
@@ -94,7 +95,7 @@ void remNL(char* string, int n);
 void strToLower(char* string, int n);
 void strToUpper(char* string, int n);
 void strinj(char* parstr, int parsiz, char* chldstr, int chldlen, int idx);
-double RND1();
+double RND1(void);
 void displayManual(void);
 
 
@@ -551,8 +552,9 @@ void exeSRS(struct Galaxy* refGalaxy) {
         ////*
         if (KlingonsInQuadrant(refGalaxy, (*refGalaxy).enterprise.position) > 0) {
             for (int i=0;i<GAME_NUM_KLINGONS; i++) {
+                // TODO: I changed the second line to be position[1] - they both said position[0] before. Hope this didn't break anything.
                 if (((*refGalaxy).klingons[i].position[0] == (*refGalaxy).enterprise.position[0]) &&
-                    ((*refGalaxy).klingons[i].position[0] == (*refGalaxy).enterprise.position[0])) {
+                    ((*refGalaxy).klingons[i].position[1] == (*refGalaxy).enterprise.position[1])) {
                     if ((*refGalaxy).klingons[i].energy > 0) {                  // if living Klingon found, inject it into its character space on the canvas
                         char klingStr[5] = " +K+";
                         // TODO: Could the for loop a few lines up iterate 1 through 3 instead of 1 through 26? I think that would limit how many klingons show up in a quadrant, but if too many exist in the quadrant it doesn't solve that problem. I haven't found where certain numbers are assigned to certain quadrants yet.
@@ -564,8 +566,9 @@ void exeSRS(struct Galaxy* refGalaxy) {
         //*/
         if (StarbasesInQuadrant(refGalaxy, (*refGalaxy).enterprise.position) > 0) {
             for (int i=0;i<GAME_NUM_STARBASES; i++) {
+                // TODO: Same note as above - second position[] I think should be 1 or the && is redundant.
                 if (((*refGalaxy).starbases[i].position[0] == (*refGalaxy).enterprise.position[0]) &&
-                    ((*refGalaxy).starbases[i].position[0] == (*refGalaxy).enterprise.position[0])) {
+                    ((*refGalaxy).starbases[i].position[1] == (*refGalaxy).enterprise.position[1])) {
                     if ((*refGalaxy).starbases[i].energy > 0) {                 // if intact starbase found, inject it into its character space on the canvas
                         char sbStr[5] = " >B<";
                         strinj(srsStr[(*refGalaxy).starbases[i].position[2]], 49, sbStr, strlen(sbStr), ((*refGalaxy).starbases[i].position[3]-1) * 5);
@@ -579,19 +582,19 @@ void exeSRS(struct Galaxy* refGalaxy) {
         switch(y) {
             char cond[10];
             case 1:                                                             // print additional SRS readout info, according to current line
-                printf("\tSTARDATE:\t\t%.1f\n", ((*refGalaxy).gVitals.stardate));
+                printf("\tSTARDATE:\t\t\t%.1f\n", ((*refGalaxy).gVitals.stardate));
                 break;
             case 2:
                 if ((*refGalaxy).enterprise.condition == GREEN)         { strcpy(cond,"*GREEN*");   }
                 else if ((*refGalaxy).enterprise.condition == YELLOW)   { strcpy(cond,"*YELLOW*");  }
                 else                                                    { strcpy(cond,"*RED*");     }
-                printf("\tCONDITION:\t\t%s\n", cond);
+                printf("\tCONDITION:\t\t\t%s\n", cond);
                 break;
             case 3:
-                printf("\tQUADRANT:\t\t%d,%d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]);
+                printf("\tQUADRANT:\t\t\t%d,%d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]);
                 break;
             case 4:
-                printf("\tSECTOR:\t\t\t%d,%d\n", (*refGalaxy).enterprise.position[2], (*refGalaxy).enterprise.position[3]);
+                printf("\tSECTOR:\t\t\t\t%d,%d\n", (*refGalaxy).enterprise.position[2], (*refGalaxy).enterprise.position[3]);
                 break;
             case 5:
                 printf("\tPHOTON TORPEDOES:\t%d\n", (*refGalaxy).enterprise.torpedoes);
@@ -600,7 +603,7 @@ void exeSRS(struct Galaxy* refGalaxy) {
                 printf("\tTOTAL ENERGY:\t\t%d\n", (*refGalaxy).enterprise.energy + (*refGalaxy).enterprise.shields);
                 break;
             case 7:
-                printf("\tSHIELDS:\t\t%d\n", (*refGalaxy).enterprise.shields);
+                printf("\tSHIELDS:\t\t\t%d\n", (*refGalaxy).enterprise.shields);
                 break;
             case 8:
                 printf("\tKLINGONS REMAINING:\t%d\n", (*refGalaxy).gVitals.numKlingons);
@@ -943,6 +946,7 @@ void exeTOR(struct Galaxy* refGalaxy) {
     (*refGalaxy).enterprise.energy = (*refGalaxy).enterprise.energy - 2;
 
     double torpedoPos[2];
+    int enterprisePos[2] = {(*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]};
     torpedoPos[0] = (double)(*refGalaxy).enterprise.position[2];
     torpedoPos[1] = (double)(*refGalaxy).enterprise.position[3];
     if ((torpedoPos[0] < 1) || (torpedoPos[1] < 1) || (torpedoPos[0] > 8) || (torpedoPos[1] > 8)) {
@@ -992,11 +996,10 @@ void exeTOR(struct Galaxy* refGalaxy) {
         // TODO: Add code to kill klingon
         }
         // If torpedo runs into a star, print message and return
-        /*else if () {
-        printf("STAR AT %d, %d ABSORBED TORPEDO ENERGY\n", round(torpedoPos[0]), round(torpedoPos[1]));
+        else if ((*refGalaxy).coordinates[(*refGalaxy).enterprise.position[0]][(*refGalaxy).enterprise.position[1]][(int)round(torpedoPos[0])][(int)round(torpedoPos[1])] == '*') {
+        printf("STAR AT %.0f, %.0f ABSORBED TORPEDO ENERGY\n", round(torpedoPos[0]), round(torpedoPos[1]));
             return;
-        }*/
-        // TODO: Add code to check for star at current torpedoPosition
+        }
         // If torpedo runs into a starbase, destroy the starbase, print message, and return
         else if (((*refGalaxy).starbases[i].position[0] == torpedoPos[0]) && ((*refGalaxy).starbases[i].position[0] == torpedoPos[0])) {
             // TODO: Now that I look at this again, I don't think "i" is correct subscript here. Because i is just the current iteration 1-8.
@@ -1004,9 +1007,6 @@ void exeTOR(struct Galaxy* refGalaxy) {
         // TODO: Add code to destroy starbase
             return;
         }
-        //else {
-        //printf("\t%d, %d\n", torpedoPos[0], torpedoPos[1]);
-        //}
         }
 }
 
@@ -1069,7 +1069,7 @@ void exeDBG(struct Galaxy* refGalaxy) {                                         
     return;
 }
 
-void setDest(int* _start, double dir, double dist, int* _destination) {         // Using starting coordinates, direction (NAV number), and distance, it sets destination coordinates accordingly
+int setDest(int* _start, double dir, double dist, int* _destination) {         // Using starting coordinates, direction (NAV number), and distance, it sets destination coordinates accordingly
     int sStart[2] = {(_start[0] * 8 + _start[2]), (_start[1] * 8 + _start[3])}; // For simplicity of calculation, convert (Qx,Qy,Sx,Sy) format to an equivalent (Sx,Sy)
     int sEnd[2] = {sStart[0], sStart[1]};
     int sDiff[2] = {0, 0};
@@ -1085,7 +1085,8 @@ void setDest(int* _start, double dir, double dist, int* _destination) {         
         printf("IS HEREBY *DENIED*. SHUT DOWN YOUR ENGINES.' CHIEF\n");
         printf("ENGINEER SCOTT REPORTS 'WARP ENGINES SHUT DOWN AT\n");
         printf("SECTOR %d,%d OF QUADRANT %d,%d'\n\n", _start[2],_start[3], _start[0],_start[1]);
-        return;
+        // TODO: I think we need a line here before the return to set the destination coordinates at the galaxy edge. Instead, the ship just isn't moving at all, but I think it should actually move to the 64th space (or 0-th space if it's going the other direction). Also the printf line above should have those final coordinates. Right now it's printing the starting coordinates.
+        return 0;
     }
 
     sEnd[0] = sStart[0] + sDiff[0];
@@ -1099,7 +1100,7 @@ void setDest(int* _start, double dir, double dist, int* _destination) {         
     _destination[1] = _start[1] + lclDiff[1];
     _destination[2] = _start[2] + lclDiff[2];
     _destination[3] = _start[3] + lclDiff[3];
-    return;
+    return 1;
 }
 
 double getDirection(double yD, double xD) {             // Calculates direction between two sets of coordinates TODO: fix getDir
@@ -1137,16 +1138,32 @@ double checkObstacles(int* _start, double dir, double dist, struct Galaxy* refGa
     int lastChecked[2] = {0, 0};
     for (double i=0.1; i<=dist; i+=0.1) {
         int chkCoords[4] = {0, 0, 0, 0};
-        setDest(_start, dir, i, chkCoords);
-        if ((chkCoords[2] == lastChecked[0]) && (chkCoords[3] == lastChecked[1])) {
+
+        // TODO: I made setDest return an int so that it doesn't loop through the "you reached the galaxy edge" message 20 times. HOWEVER, if we reach the galaxy edge, it doesn't move the ship at all. It should move the ship to the final space.
+        int galaxyEdge = setDest(_start, dir, i, chkCoords);
+        if (galaxyEdge == 0) {
+            return i;
+        }
+
+         //if (((sStart[0] + sDiff[0]) > 64) || ((sStart[0] + sDiff[0]) < 1) || ((sStart[1] + sDiff[1]) > 64) || ((sStart[1] + sDiff[1]) < 1)) {
+        /*if ((chkCoords[2] == lastChecked[0]) && (chkCoords[3] == lastChecked[1])) {
             continue;
         } else {
             lastChecked[0] = chkCoords[2];
             lastChecked[1] = chkCoords[3];
-        }                                                                                       //printf("Checking coordinates: (%d,%d,%d,%d)\n", chkCoords[0], chkCoords[1], chkCoords[2], chkCoords[3]); //DEBUG
-        if ((*refGalaxy).coordinates[chkCoords[0]][chkCoords[1]][chkCoords[2]][chkCoords[3]] != ' ') {
+        } */                                                                                      //printf("Checking coordinates: (%d,%d,%d,%d)\n", chkCoords[0], chkCoords[1], chkCoords[2], chkCoords[3]); //DEBUG
+
+        // I tried rewriting the above loop without "continue" - I think "continue" might only work with while, not for?
+        if ((chkCoords[2] != lastChecked[0]) && (chkCoords[3] != lastChecked[1])) {
+            lastChecked[0] = chkCoords[2];
+            lastChecked[1] = chkCoords[3];
+        }
+        // Check if enterprise has run into a star
+        if ((*refGalaxy).coordinates[chkCoords[0]][chkCoords[1]][chkCoords[2]][chkCoords[3]] == '*') {
             return (i - 0.1);
+
         } else {
+            // Check for Klingon coordinates
             for (int j=0; j<GAME_NUM_KLINGONS; j++) {
                 struct Klingon* thisK = &((*refGalaxy).klingons[j]);
                 if (((*thisK).energy > 0) &&
@@ -1155,6 +1172,7 @@ double checkObstacles(int* _start, double dir, double dist, struct Galaxy* refGa
                     ((*thisK).position[2] == chkCoords[2]) &&
                     ((*thisK).position[3] == chkCoords[3])) {
                     return (i - 0.1);
+                // Check for starbase coordinates
                 } else if (j < GAME_NUM_STARBASES) {
                     struct Starbase* thisSB = &((*refGalaxy).starbases[j]);
                     if (((*thisSB).energy > 0) &&
@@ -1163,6 +1181,7 @@ double checkObstacles(int* _start, double dir, double dist, struct Galaxy* refGa
                         ((*thisSB).position[2] == chkCoords[2]) &&
                         ((*thisSB).position[3] == chkCoords[3])) {
                         return (i - 0.1);
+
                     }
                 }
             }
