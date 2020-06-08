@@ -19,13 +19,16 @@
 typedef enum {GREEN, YELLOW, RED} Condition;
 
 //struct declarations:
-struct gameVitals {
-  int eEnergy;
-  int numStarbases;
-  int numKlingons;
-  double stardate;
-  bool userQuit;
-};
+
+//CHANGED-FORMER GVITALS
+//struct gameVitals {                           MOVED/CHANGED TO:
+//  bool eDestroyed;                            -> Enterprise.userQuit
+//  int eEnergy;                                -> getTotalEnergy(struct Enterprise*)
+//  int numStarbases;                           -> Galaxy.starbaseCount
+//  int numKlingons;                            -> Galaxy.klingonCount
+//  double stardate;                            -> Galaxy.starbase
+//  bool userQuit;                              -> Enterprise.userQuit
+//};
 
 struct Starbase {
   int position[4];
@@ -47,14 +50,19 @@ struct Enterprise {
   int shields;
   int torpedoes;
   Condition condition;
+  bool userQuit;
 };
 
 struct Galaxy {
   char coordinates[9][9][9][9];
+  double stardate;
   struct Starbase starbases[GAME_NUM_STARBASES];
+  int starbaseCount;
+  int starbasesDestroyed;
   struct Klingon klingons[GAME_NUM_KLINGONS];
+  int klingonCount;
   struct Enterprise enterprise;
-  struct gameVitals gVitals;
+  //CHANGED-FORMER GVITALS struct gameVitals gVitals;
   bool glblDEBUG;                                                               // global debug variable which enables non-game debug options; triggered by giving DBG command
 };
 
@@ -105,11 +113,11 @@ int main() {
     bool gameRunning = true;
     struct Galaxy theGalaxy;
     theGalaxy = gameIntro();
-    theGalaxy.gVitals = getGameVitals(&theGalaxy);
+    //CHANGED-FORMER GVITALS theGalaxy.gVitals = getGameVitals(&theGalaxy);
 
     while (gameRunning) {                                                           // Main game loop:
         getCommand(&theGalaxy);
-        theGalaxy.gVitals = getGameVitals(&theGalaxy);
+        //CHANGED-FORMER GVITALS theGalaxy.gVitals = getGameVitals(&theGalaxy);
         gameRunning = gameEnd(&theGalaxy);
     }
     return 0;                                                                       // indicates normal return from main; i.e. no errors
@@ -128,6 +136,8 @@ struct Galaxy createGalaxy(void) {
     struct Galaxy _galaxy;
     struct Starbase starbases;
     struct Klingon klingons;
+    int sbCount = 0;
+    int kCount = 0;
 
     // First initialize Galaxy with blank spaces to overwrite anything that was already there.
     for (int i = 1; i <= 8; ++i) {
@@ -159,65 +169,67 @@ struct Galaxy createGalaxy(void) {
             }
         }
         _galaxy.starbases[i] = newSB;                           // save completed starbase in galaxy.starbases array
+        sbCount++;
     }
 
     //Klingons are spawning, however going over limit per quadrant
-  while (numKlingons < GAME_NUM_KLINGONS - 2) { //Produces max 26, must be less than 24 so if producing 3 on last loop, then max will be 26
+    while (numKlingons < GAME_NUM_KLINGONS - 2) { //Produces max 26, must be less than 24 so if producing 3 on last loop, then max will be 26
         int tempK;
         struct Klingon newKlingon;
         bool notPlaced = true;
         while (notPlaced) {                                     // Assign random position:
-            int w = rand()%8 + 1;                                 //Made all the coordinates random again, iterating exceeds max number allowed due to the while loop already accounting for that
-            int x = rand()%8 + 1;
+            int w = (int)ceil(RND1()*8.0);                      //Made all the coordinates random again, iterating exceeds max number allowed due to the while loop already accounting for that
+            int x = (int)ceil(RND1()*8.0);
 
-                    int chance = rand()%100;          // Generate random percentage
-                    tempK = klingonsInQuad[w][x];     //temp save for number of klingons in current quadrant
+            int chance = rand()%101;                            // Generate random percentage
+            tempK = klingonsInQuad[w][x];                       //temp save for number of klingons in current quadrant
 
-                    if (chance > 95) {
-                      if(klingonsInQuad[w][x] < 1) { //Checks if current quadrant has the less than the max number of klingons allowed
-                        klingonsInQuad[w][x] = 3;
-                        numKlingons = numKlingons + 3;
-                      }
-                      else { //If number does not permit adding more to current quadrant then skips to next randomly selected quadrant
-                          klingonsInQuad[w][x] = 0;
-                      }
-                    }
-                    else if (chance > 90) {
-                      if(klingonsInQuad[w][x] < 2) {
-                        klingonsInQuad[w][x] = 2;
-                        numKlingons = numKlingons + 2;
-                      }
-                      else {
-                          klingonsInQuad[w][x] = 0;
-                      }
-                    }
-                    else if (chance > 80) {
-                      if(klingonsInQuad[w][x] < 3) {
-                        klingonsInQuad[w][x] = 1;
-                        numKlingons = numKlingons + 1;
-                      }
-                      else {
-                          klingonsInQuad[w][x] = 0;
-                      }
-                    }
-                    else {
-                        klingonsInQuad[w][x] = 0;
-                    }
+            if (chance > 0.95) {
+            if(klingonsInQuad[w][x] < 1) {                      //Checks if current quadrant has the less than the max number of klingons allowed
+            klingonsInQuad[w][x] = 3;
+            numKlingons = numKlingons + 3;
+            }
+            else {                                              //If number does not permit adding more to current quadrant then skips to next randomly selected quadrant
+            klingonsInQuad[w][x] = 0;
+            }
+            }
+            else if (chance > 0.90) {
+            if(klingonsInQuad[w][x] < 2) {
+            klingonsInQuad[w][x] = 2;
+            numKlingons = numKlingons + 2;
+            }
+            else {
+            klingonsInQuad[w][x] = 0;
+            }
+            }
+            else if (chance > 0.80) {
+            if(klingonsInQuad[w][x] < 3) {
+            klingonsInQuad[w][x] = 1;
+            numKlingons = numKlingons + 1;
+            }
+            else {
+            klingonsInQuad[w][x] = 0;
+            }
+            }
+            else {
+            klingonsInQuad[w][x] = 0;
+            }
 
-                    for (int j = 0; j < klingonsInQuad[w][x]; ++j) {
-                          int y = rand()%8 + 1;                                 // Use rand() to choose a random sector in current quadrant
-                          int z = rand()%8 + 1;
-                          if (_galaxy.coordinates[w][x][y][z] == ' ') {         // Check that spot is empty
-                              newKlingon.position[0] = w;                       // Save location in klingons.position array
-                              newKlingon.position[1] = x;
-                              newKlingon.position[2] = y;
-                              newKlingon.position[3] = z;
-                              newKlingon.energy = 100 + (rand()%200);            // randomly from 100-300
-                              notPlaced = false;
-                              _galaxy.klingons[a] = newKlingon; // save completed klingon in galaxy.klingons array
-                              ++a;  //save is now in the loop, so we can save the individual if more than 1 is created
-                          }
-                    }
+            for (int j = 0; j < klingonsInQuad[w][x]; ++j) {
+                int y = rand()%8 + 1;                             // Use rand() to choose a random sector in current quadrant
+                int z = rand()%8 + 1;
+                if (_galaxy.coordinates[w][x][y][z] == ' ') {     // Check that spot is empty
+                    newKlingon.position[0] = w;                   // Save location in klingons.position array
+                    newKlingon.position[1] = x;
+                    newKlingon.position[2] = y;
+                    newKlingon.position[3] = z;
+                    newKlingon.energy = 100 + (rand()%201);       // randomly from 100-300
+                    notPlaced = false;
+                    _galaxy.klingons[a] = newKlingon;             // save completed klingon in galaxy.klingons array
+                    kCount++;
+                    ++a;  //save is now in the loop, so we can save the individual if more than 1 is created
+                }
+            }
             klingonsInQuad[w][x] = klingonsInQuad[w][x] + tempK; //After check reinstates number in quadrant and adds any added klingons
         }
     }
@@ -238,22 +250,17 @@ struct Galaxy createGalaxy(void) {
     }
 
     _galaxy.glblDEBUG = false;
+    _galaxy.klingonCount = kCount;
+    _galaxy.starbaseCount = sbCount;
+    _galaxy.stardate = GAME_INITIAL_STARDATE;
 
-// Set up starting gameVitals for currentGame
-// All game vitals will count down to 0
-// If any game vital reaches 0, game will end.
-    _galaxy.gVitals.eEnergy = GAME_ENERGY_MAX;
-    _galaxy.gVitals.numStarbases = numStarbases;
-    _galaxy.gVitals.numKlingons = numKlingons;
-    _galaxy.gVitals.stardate = (double)GAME_INITIAL_STARDATE;
-    _galaxy.gVitals.userQuit = false;
     return _galaxy;
 };
 
 struct Enterprise createEnterprise(struct Galaxy *refGalaxy) {
     struct Enterprise _enterprise;
     _enterprise.isDestroyed = false;
-    // Set system names
+    // Set Enterprise system names
     strcpy(_enterprise.sysNames[0],"WARP ENGINES");
     strcpy(_enterprise.sysNames[1],"SHORT RANGE SENSORS");
     strcpy(_enterprise.sysNames[2],"LONG RANGE SENSORS");
@@ -275,12 +282,42 @@ struct Enterprise createEnterprise(struct Galaxy *refGalaxy) {
     }
     _enterprise.explored[_enterprise.position[0]][_enterprise.position[1]] = 1; // Mark current quadrant as Explored
 
+//FORMER GVITALS:
+//    struct gameVitals GVout;
+//    if ((*refGalaxy).enterprise.isDestroyed) {
+//        GVout.eDestroyed = true;
+//        GVout.eEnergy = -1;
+//    } else {
+//        GVout.eEnergy = (*refGalaxy).enterprise.energy + (*refGalaxy).enterprise.shields;
+//    }
+//    int nK = 0;   int nSB = 0;
+//    for (int i=1; i<=8; i++) {
+//      for (int j=0; j<=8; j++) {
+//        int thisQuad[2] = {i, j};
+//        nK += KlingonsInQuadrant(refGalaxy, thisQuad);
+//        nSB += StarbasesInQuadrant(refGalaxy, thisQuad);
+//      }
+//    }
+//    GVout.numKlingons = nK;
+//    GVout.numStarbases = nSB;
+//    GVout.stardate = (*refGalaxy).gVitals.stardate;
+//    GVout.userQuit = (*refGalaxy).gVitals.userQuit;
+
+// Set up starting gameVitals for currentGame
+// All game vitals will count down to 0
+// If any game vital reaches 0, game will end.
+//    _galaxy.gVitals.eDestroyed = false;
+//    _galaxy.gVitals.eEnergy = GAME_ENERGY_MAX;
+//    _galaxy.gVitals.userQuit = false;
+
     // Set up initial conditions for enterprise
     for (int i = 0; i < 8; ++i) { _enterprise.sysDamage[i] = 0; }
-    _enterprise.energy = 3000;
+    _enterprise.energy = GAME_ENERGY_MAX;
     _enterprise.shields = 0;
     _enterprise.torpedoes = 10;
     _enterprise.condition = RED;
+    _enterprise.isDestroyed = false;
+    _enterprise.userQuit = false;
     return _enterprise;
 };
 
@@ -314,18 +351,20 @@ struct Galaxy gameIntro(void) {                                                 
   newGalaxy = createGalaxy();
   newGalaxy.enterprise = createEnterprise(&newGalaxy);
     printf("YOUR ORDERS ARE AS FOLLOWS :\n");
-    printf("\tDESTROY THE %d KLINGON WARSHIPS WHICH HAVE INVADED\n", newGalaxy.gVitals.numKlingons);
+    printf("\tDESTROY THE %d KLINGON WARSHIPS WHICH HAVE INVADED\n", newGalaxy.klingonCount);
     printf("\tTHE GALAXY BEFORE THEY CAN ATTACK FEDERATION HEADQUARTERS\n");
-    printf("\tON STARDATE %4.0f. THIS GIVES YOU %d DAYS. THERE ARE\n", (newGalaxy.gVitals.stardate)+GAME_STARDATE_LIMIT, GAME_STARDATE_LIMIT);
-    printf("\t%d STARBASES IN THE GALAXY FOR RESUPPLYING YOUR SHIP.\n", newGalaxy.gVitals.numStarbases);
+    printf("\tON STARDATE %4.0f. THIS GIVES YOU %d DAYS. THERE ARE\n", (newGalaxy.stardate)+GAME_STARDATE_LIMIT, GAME_STARDATE_LIMIT);
+    printf("\t%d STARBASES IN THE GALAXY FOR RESUPPLYING YOUR SHIP.\n", newGalaxy.starbaseCount);
   exeSRS(&newGalaxy);
 
   return newGalaxy;
 }
 
-struct gameVitals getGameVitals(struct Galaxy *refGalaxy) {
+/* //TODO: DELETE FORMER GVITALS
+struct gameVitals getGameVitals(struct Galaxy *refGalaxy) { //TODO: DELETE FORMER GVITALS
     struct gameVitals GVout;
     if ((*refGalaxy).enterprise.isDestroyed) {
+        GVout.eDestroyed = true;
         GVout.eEnergy = -1;
     } else {
         GVout.eEnergy = (*refGalaxy).enterprise.energy + (*refGalaxy).enterprise.shields;
@@ -344,9 +383,29 @@ struct gameVitals getGameVitals(struct Galaxy *refGalaxy) {
     GVout.userQuit = (*refGalaxy).gVitals.userQuit;
     return GVout;
 }
-
+*/
+// TODO: Game end function to eventually delete
+/*
 bool gameEnd(struct Galaxy *refGalaxy) {
-    if ((*refGalaxy).gVitals.userQuit) {                                        // If user chooses Quit
+    bool gameContinue = true;
+    if ((*refGalaxy).enterprise.isDestroyed) {                                  //check if Enterprise destroyed
+        printf("THE ENTERPRISE HAS BEEN DESTROYED. THE FEDERATION WILL BE CONQUERED\n");
+        printf("THERE WERE %d KLINGON BATTLE CRUISERS LEFT AT THE END OF YOUR MISSION.", (*refGalaxy).klingonCount);
+    } else if ((*refGalaxy).enterprise.userQuit) {                              // If user chooses Quit
+        //print message for that condition
+    } else if () {
+                                                                  //check next condition
+    //} else if () {                                                              //check next condition
+        //print message for that condition
+    //} else if () {                                                              //check next condition
+        //print message for that condition
+    //} else if () {                                                              //check next condition
+        //print message for that condition
+    //} else if () {                                                              //check next condition
+        //print message for that condition
+    //}
+
+
         char getInput[100] = {0};
         printf("THE FEDERATION IS IN NEED OF A NEW STARSHIP COMMANDER\n");
         printf("FOR A SIMILAR MISSION -- IF THERE IS A VOLUNTEER\n");
@@ -357,12 +416,12 @@ bool gameEnd(struct Galaxy *refGalaxy) {
 
         // Check if user starts a new game
         if((strcmp(getInput, "AYE") == 0) || (strcmp(getInput, "Aye") == 0)|| (strcmp(getInput, "aye") == 0)) {
-            (*refGalaxy).gVitals.userQuit = false;
+            (*refGalaxy).enterprise.userQuit = false;
 
             return true;
         } else {
             printf("\nGame ended\n");
-            (*refGalaxy).gVitals.userQuit = true;
+            (*refGalaxy).enterprise.userQuit = true;
             return false;
         }
     }
@@ -370,23 +429,133 @@ bool gameEnd(struct Galaxy *refGalaxy) {
         // Check each member of gVitals to see whether game ending conditions are met
         //for(int i = 0; i < 5; ++i){
         // If stardate is 0 (time is up)
-        if((*refGalaxy).gVitals.eEnergy <= 10) {
+        int eEnergy = getTotalEnergy(&((*refGalaxy).enterprise));
+        if(eEnergy <= 10) {
           printf("** FATAL ERROR **\nYOU'VE JUST STRANDED YOUR SHIP IN SPACE.\nYOU HAVE INSUFFICIENT MANEUVERING ENERGY, AND SHIELD CONTROL IS PRESENTLY INCAPABLE OF CROSS-CIRCUITING TO ENGINE ROOM!!\n\n");
           return false;
         }
-        if((*refGalaxy).gVitals.stardate == 0){
+        if((*refGalaxy).stardate == GAME_STARDATE_LIMIT){
             char getInput[100] = {0};
-            printf("IT IS STARDATE %d\n", (*refGalaxy).gVitals.stardate);
-            printf("THERE WERE %d KLINGON BATTLE CRUISERS LEFT AT\n", (*refGalaxy).gVitals.numKlingons);
+            printf("IT IS STARDATE %d\n", (*refGalaxy).stardate);
+            printf("THERE WERE %d KLINGON BATTLE CRUISERS LEFT AT\n", (*refGalaxy).klingonCount);
             printf("THE END OF YOUR MISSION.\n\n");
             return false;
         }
-        else if((*refGalaxy).gVitals.numStarbases == 0) {
+        else if((*refGalaxy).starbaseCount == 0) {
                 printf("YOUR STUPIDITY HAS LEFT YOU ON YOUR OWN IN THE GALAXY -- YOU HAVE NO STARBASES LEFT!\n\n");
                 return false;
             }
         else { return true; }
 }
+*/
+// TODO: Would someone test this GameEnd function? Sometimes it loops through the enterpriseDestroyed text a few times.
+bool gameEnd(struct Galaxy *refGalaxy) {
+    bool gameContinue = true;
+    double stardatesLeft = ((GAME_INITIAL_STARDATE + GAME_STARDATE_LIMIT) - (*refGalaxy).stardate);
+    if ((*refGalaxy).enterprise.isDestroyed == true) {                                  //check if Enterprise destroyed
+        gameContinue = false;                                     //set gameContinue to false until the user says otherwise
+        printf("THE ENTERPRISE HAS BEEN DESTROYED. THE FEDERATION WILL BE CONQUERED\n");
+        printf("THERE WERE %d KLINGON BATTLE CRUISERS LEFT AT THE END OF YOUR MISSION.\n", (*refGalaxy).klingonCount);
+    } else if (stardatesLeft <= 0) {                                          //check stardate
+        gameContinue = false;
+        printf("IT IS STARDATE %.0f.\n", (*refGalaxy).stardate);
+        printf("THERE WERE %d KLINGON BATTLE CRUISERS LEFT AT THE END OF YOUR MISSION.\n", (*refGalaxy).klingonCount);
+    } else if ((*refGalaxy).starbaseCount <= 0) {                              //check number of Starbases
+        printf("YOUR STUPIDITY HAS LEFT YOU ON YOUR OWN IN THE GALAXY -- YOU HAVE NO STARBASES LEFT!\n\n");
+    } else if(getTotalEnergy(&((*refGalaxy).enterprise)) <= 10) {           // check energy
+        gameContinue = false;
+        printf("** FATAL ERROR **\nYOU'VE JUST STRANDED YOUR SHIP IN SPACE.\nYOU HAVE INSUFFICIENT MANEUVERING ENERGY, AND SHIELD CONTROL IS PRESENTLY INCAPABLE OF CROSS-CIRCUITING TO ENGINE ROOM!!\n\n");
+    } else if ((*refGalaxy).klingonCount <= 0) {                               //check number of Klingons
+        gameContinue = false;
+        printf("CONGRATULATIONS, CAPTAIN. THE LAST KLINGON BATTLE CRUISER\n");
+        printf("MENACING THE FEDERATION HAS BEEN DESTROYED\n");
+        double efficiency = 1000 * pow((GAME_NUM_KLINGONS/stardatesLeft), 2);
+        printf("YOUR EFFICIENCY RATING IS: %.2f\n", efficiency);
+    } else if ((*refGalaxy).enterprise.userQuit) {                                 // If user chooses Quit
+        gameContinue = false;
+    } else {
+        gameContinue = true;
+    }
+
+    if (!gameContinue) {
+        char getInput[100] = {0};
+        printf("THE FEDERATION IS IN NEED OF A NEW STARSHIP COMMANDER\n");
+        printf("FOR A SIMILAR MISSION -- IF THERE IS A VOLUNTEER\n");
+        printf("LET HIM STEP FORWARD AND ENTER 'AYE' ");
+
+        fgets(getInput, 100, stdin);
+        getInput[strlen(getInput) - 1] = '\0';
+
+        // Check if user starts a new game
+        if((strcmp(getInput, "AYE") == 0) || (strcmp(getInput, "Aye") == 0)|| (strcmp(getInput, "aye") == 0)) {
+            (*refGalaxy).enterprise.userQuit = false;
+            struct Galaxy newGalaxy = gameIntro();
+            return true;
+        } else {
+            printf("\nGame ended\n");
+            (*refGalaxy).enterprise.userQuit = true;
+            return false;
+        }
+    }
+    else { return true;}
+}
+// TODO: I used this code in my version, copied above - eventually need to delete this
+// BEGIN KYLE'S PROTO-gameEND() function:
+/*bool gameEnd(struct Galaxy *refGalaxy) {
+    bool gameContinue = true;
+
+    // Collect variables that might end the game:
+    int klingonsLeft = 0;
+    int starbasesLeft = 0;
+    int starbasesDestroyed = 0;
+    double stardatesLeft = ((GAME_INITIAL_STARDATE + GAME_STARDATE_LIMIT) - (*refGalaxy).stardate);
+    int eEnergy = getTotalEnergy(&((*refGalaxy).enterprise));
+    bool hasQuit = (*refGalaxy).enterprise.userQuit;
+
+    if ((*refGalaxy).enterprise.isDestroyed) {                                  //check if Enterprise destroyed
+        gameContinue = false;                                                   //set gameContinue to false until the user says otherwise
+        printf("THE ENTERPRISE HAS BEEN DESTROYED. THE FEDERATION WILL BE CONQUERED\n");
+        printf("THERE WERE %d KLINGON BATTLE CRUISERS LEFT AT THE END OF YOUR MISSION.", (*refGalaxy).klingonCount);
+    } else if (stardatesLeft <= 0) {                                            //check next condition
+        // time expired message here
+    } else if (starbasesLeft <= 0) {                                            //check next condition
+        printf("YOUR STUPIDITY HAS LEFT YOU ON YOUR OWN IN THE GALAXY -- YOU HAVE NO STARBASES LEFT!\n\n");
+    } else if(eEnergy <= 10) {
+        gameContinue = false;
+        printf("** FATAL ERROR **\nYOU'VE JUST STRANDED YOUR SHIP IN SPACE.\nYOU HAVE INSUFFICIENT MANEUVERING ENERGY, AND SHIELD CONTROL IS PRESENTLY INCAPABLE OF CROSS-CIRCUITING TO ENGINE ROOM!!\n\n");
+    //} else if () {                                                              //check next condition
+        //print message for that condition
+    //} else if () {                                                              //check next condition
+        //print message for that condition
+    } else if (hasQuit) {                                                       // If user chooses Quit
+        gameContinue = false;
+    }
+
+    if (!gameContinue) {
+        char getInput[100] = {0};
+        printf("THE FEDERATION IS IN NEED OF A NEW STARSHIP COMMANDER\n");
+        printf("FOR A SIMILAR MISSION -- IF THERE IS A VOLUNTEER\n");
+        printf("LET HIM STEP FORWARD AND ENTER 'AYE' ");
+
+        fgets(getInput, 100, stdin);
+        getInput[strlen(getInput) - 1] = '\0';
+
+        // Check if user starts a new game
+        if((strcmp(getInput, "AYE") == 0) || (strcmp(getInput, "Aye") == 0)|| (strcmp(getInput, "aye") == 0)) {
+            (*refGalaxy).enterprise.userQuit = false;
+
+            return true;
+        } else {
+            printf("\nGame ended\n");
+            (*refGalaxy).enterprise.userQuit = true;
+            return false;
+        }
+    } else {
+        return true;
+    }
+}
+// END PROTO-gameEND
+*/
 
 void getCommand(struct Galaxy *refGalaxy) {
     char cmdString[MAX_INPUT_LENGTH];
@@ -404,7 +573,7 @@ void getCommand(struct Galaxy *refGalaxy) {
     } else if (strcmp(cmdString, "TOR") == 0) { exeTOR(refGalaxy);
     } else if (strcmp(cmdString, "SHE") == 0) { exeSHE(refGalaxy);
     } else if (strcmp(cmdString, "MAN") == 0) { displayManual();
-    } else if (strcmp(cmdString, "XXX") == 0) { (*refGalaxy).gVitals.userQuit = true;                   // If user chooses resign, trigger the 'userQuit' gameVital
+    } else if (strcmp(cmdString, "XXX") == 0) { (*refGalaxy).enterprise.userQuit = true;                   // If user chooses resign, trigger the 'userQuit' gameVital
     } else if (strcmp(cmdString, "DBG") == 0) { exeDBG(refGalaxy);                                      // DEBUG: 'DBG' == a "secret" debug option showing game data and enabling '+' commands below:
   } else if ((strcmp(cmdString, "+LR") == 0)&&((*refGalaxy).glblDEBUG)) { exeSLR(refGalaxy);                        // DEBUG: '+LR' == hidden "super long range" sensors: calls LRS for all quadrants
     } else if ((strcmp(cmdString, "+EN") == 0)&&((*refGalaxy).glblDEBUG)) {
@@ -453,7 +622,7 @@ void exeHLP(struct Galaxy* refGalaxy) {
     return;
 }
 
-void exeNAV(struct Galaxy* refGalaxy) {
+void exeNAV(struct Galaxy* refGalaxy) {                                 //TODO: FINISH NAV OBSTACLE DAMAGE
     char* cmdString[MAX_INPUT_LENGTH];
     double setCourse = 0.0;
     double setWarp = 0.0;
@@ -481,7 +650,7 @@ void exeNAV(struct Galaxy* refGalaxy) {
             return;
         } else {
             if ((enExp > (*refGalaxy).enterprise.energy) && (enExp < ((*refGalaxy).enterprise.energy + (*refGalaxy).enterprise.shields))) {
-                printf("SHIELD CONTROL SUPPLIES ENERGY TO COMPLETE THE MANEUVER.\n");                       // if needed energy is greater than free energy, but within energy + shields, allow warp
+                printf("SHIELD CONTROL SUPPLIES ENERGY TO COMPLETE THE MANEUVER.\n");                       // if (energy needed > free energy), but <= (energy + shields), allow warp
             }
             if (KlingonsInQuadrant(refGalaxy, (*refGalaxy).enterprise.position) > 0) {
                 KlingonsFire(refGalaxy);
@@ -492,7 +661,7 @@ void exeNAV(struct Galaxy* refGalaxy) {
             double dest = checkObstacles(curPos,setCourse,setWarp,refGalaxy);
             if (dest < setWarp) {
                 setDest(curPos, setCourse, dest, newPos);
-                printf("OBSTACLE ENCOUNTERED; REACHED: %.2f\n\n", dest);                                    //TODO: FIND/RETURN OBSTACLE (NAV)
+                printf("WARP ENGINES SHUT DOWN AT \nSECTOR : %.2f DUE TO BAD NAVIGATION\n\n", dest);                                    //NOTE: FIND/RETURN OBSTACLE HERE
             } else {
                 setDest(curPos, setCourse, setWarp, newPos);
             }
@@ -505,10 +674,10 @@ void exeNAV(struct Galaxy* refGalaxy) {
                 (*refGalaxy).enterprise.shields += (*refGalaxy).enterprise.energy;                          // subtract excess energy from shields
                 (*refGalaxy).enterprise.energy = 0;                                                         // set energy to 0
             }
-            (*refGalaxy).gVitals.stardate += (double)minnum((double)1.0, setWarp);
+            (*refGalaxy).stardate += (double)minnum((double)1.0, setWarp);
             updateCondition(refGalaxy);
         }
-    }                                                                                                       // TODO: Write code to output quadrant name upon entry (NAV)
+    }                                                                                                       // TODO: display quadrant name message upon entry (NAV)
 
     return;
 }
@@ -525,95 +694,84 @@ void exeSRS(struct Galaxy* refGalaxy) {
         if ((*refGalaxy).enterprise.shields <= 200) { printf("\t   SHIELDS DANGEROUSLY LOW\n"); }
     }
     printf("---------------------------------------------\n");
-    // Get current enterprise quadrant location from enterprise coordinates
     int w = (*refGalaxy).enterprise.position[0];
     int x = (*refGalaxy).enterprise.position[1];
-    int numKlingons = 0;
-    // Iterate through current quadrant and print whatever is in each sector
-    char srsStr[10][45];                                                        // create empty 2D char vector to serve as a "canvas"
-    for (int i=0; i<9; i++) {
-        for (int j=0; j<=44; j++) {
-            if (j<=43)  { srsStr[i][j] = ' ';   }                               // fill char vector with empty spaces
-            else        { srsStr[i][j] = '\0';  }
+
+    char quadrantStr[8][37];
+    for (int i=0; i<8; i++) {
+        for (int j=0; j<37; j++) {
+            if (((j+2)%4 == 0) && ((j+2)/4 <= 8)) {
+                int testCol = (j+2)/4;
+                quadrantStr[i][j] = ((*refGalaxy).coordinates[w][x][i+1][(int)floor((j+2)/4.0)]);
+            } else {
+                quadrantStr[i][j] = ' ';
+            }
         }
+        quadrantStr[i][36] == '\0';
     }
+    for (int i=0; i<GAME_NUM_KLINGONS; i++) {
+        if (((*refGalaxy).klingons[i].position[0] == w) &&
+            ((*refGalaxy).klingons[i].position[1] == x) &&
+            ((*refGalaxy).klingons[i].energy > 0)) {
+            int column = (((*refGalaxy).klingons[i].position[3] * 4) - 2);
+            quadrantStr[(*refGalaxy).klingons[i].position[2]-1][column-1] = '+';
+            quadrantStr[(*refGalaxy).klingons[i].position[2]-1][column] = 'K';
+            quadrantStr[(*refGalaxy).klingons[i].position[2]-1][column+1] = '+';
+            }
+    }
+    for (int i=0; i<GAME_NUM_STARBASES; i++) {
+        if (((*refGalaxy).starbases[i].position[0] == w) &&
+            ((*refGalaxy).starbases[i].position[1] == x) &&
+            ((*refGalaxy).starbases[i].energy > 0)) {
+            int column = (((*refGalaxy).starbases[i].position[3] * 4) - 2);
+            quadrantStr[(*refGalaxy).starbases[i].position[2]-1][column-1] = '>';
+            quadrantStr[(*refGalaxy).starbases[i].position[2]-1][column] = 'B';
+            quadrantStr[(*refGalaxy).starbases[i].position[2]-1][column+1] = '<';
+            }
+    }
+    quadrantStr[(*refGalaxy).enterprise.position[2]-1][(((*refGalaxy).enterprise.position[3] * 4) - 2)-1] = '<';
+    quadrantStr[(*refGalaxy).enterprise.position[2]-1][(((*refGalaxy).enterprise.position[3] * 4) - 2)] = 'E';
+    quadrantStr[(*refGalaxy).enterprise.position[2]-1][(((*refGalaxy).enterprise.position[3] * 4) - 2)+1] = '>';
+
     for (int y = 1; y<=8; y++) {                                                // iterate through quadrant line-by-line, checking for entities
-        for (int z = 1; z<=8; z++) { srsStr[y][(z-1) * 5 + 2] = (*refGalaxy).coordinates[w][x][y][z]; }
-        /*
-        int klingonsHere = KlingonsInQuadrant(refGalaxy, (*refGalaxy).enterprise.position);
-        for (int i=1; i<=klingonsHere; i++) {
-            struct Klingon* thisK = getNthClosestKlingon(refGalaxy,i);
-            if ((*thisK).position[2] == y) {
-                char klingStr[5] = " +K+";
-                strinj(srsStr[(*refGalaxy).klingons[i].position[2]], 49, klingStr, strlen(klingStr), ((*refGalaxy).klingons[i].position[3]-1) * 5);
-            }
+        printf(" ");
+        for (int z=0; z<36; z++) {
+            printf("%c", quadrantStr[y-1][z]);                                  // draw canvas line
         }
-        */
-        ////*
-        if (KlingonsInQuadrant(refGalaxy, (*refGalaxy).enterprise.position) > 0) {
-            for (int i=0;i<GAME_NUM_KLINGONS; i++) {
-                // TODO: I changed the second line to be position[1] - they both said position[0] before. Hope this didn't break anything.
-                if (((*refGalaxy).klingons[i].position[0] == (*refGalaxy).enterprise.position[0]) &&
-                    ((*refGalaxy).klingons[i].position[1] == (*refGalaxy).enterprise.position[1])) {
-                    if ((*refGalaxy).klingons[i].energy > 0) {                  // if living Klingon found, inject it into its character space on the canvas
-                        char klingStr[5] = " +K+";
-                        // TODO: Could the for loop a few lines up iterate 1 through 3 instead of 1 through 26? I think that would limit how many klingons show up in a quadrant, but if too many exist in the quadrant it doesn't solve that problem. I haven't found where certain numbers are assigned to certain quadrants yet.
-                        strinj(srsStr[(*refGalaxy).klingons[i].position[2]], 49, klingStr, strlen(klingStr), ((*refGalaxy).klingons[i].position[3]-1) * 5);
-                    }
-                }
-            }
-        }
-        //*/
-        if (StarbasesInQuadrant(refGalaxy, (*refGalaxy).enterprise.position) > 0) {
-            for (int i=0;i<GAME_NUM_STARBASES; i++) {
-                // TODO: Same note as above - second position[] I think should be 1 or the && is redundant.
-                if (((*refGalaxy).starbases[i].position[0] == (*refGalaxy).enterprise.position[0]) &&
-                    ((*refGalaxy).starbases[i].position[1] == (*refGalaxy).enterprise.position[1])) {
-                    if ((*refGalaxy).starbases[i].energy > 0) {                 // if intact starbase found, inject it into its character space on the canvas
-                        char sbStr[5] = " >B<";
-                        strinj(srsStr[(*refGalaxy).starbases[i].position[2]], 49, sbStr, strlen(sbStr), ((*refGalaxy).starbases[i].position[3]-1) * 5);
-                    }
-                }
-            }
-        }
-        char eStr[5] = " <E>";                                                  // inject the enterprise into its location within the canvas
-        strinj(srsStr[(*refGalaxy).enterprise.position[2]], 49, eStr, strlen(eStr), (((*refGalaxy).enterprise.position[3]-1) * 5));
-        printf(srsStr[y]);                                                      // draw canvas line
         switch(y) {
             char cond[10];
             case 1:                                                             // print additional SRS readout info, according to current line
-                printf("\tSTARDATE:\t\t\t%.1f\n", ((*refGalaxy).gVitals.stardate));
+                printf("\t\tSTARDATE:\t\t%.1f\n", ((*refGalaxy).stardate));
                 break;
             case 2:
-                if ((*refGalaxy).enterprise.condition == GREEN)         { strcpy(cond,"*GREEN*");   }
+                if ((*refGalaxy).enterprise.condition == GREEN)         { strcpy(cond,"GREEN");   }
                 else if ((*refGalaxy).enterprise.condition == YELLOW)   { strcpy(cond,"*YELLOW*");  }
                 else                                                    { strcpy(cond,"*RED*");     }
-                printf("\tCONDITION:\t\t\t%s\n", cond);
+                printf("\t\tCONDITION:\t\t%s\n", cond);
                 break;
             case 3:
-                printf("\tQUADRANT:\t\t\t%d,%d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]);
+                printf("\t\tQUADRANT:\t\t%d,%d\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1]);
                 break;
             case 4:
-                printf("\tSECTOR:\t\t\t\t%d,%d\n", (*refGalaxy).enterprise.position[2], (*refGalaxy).enterprise.position[3]);
+                printf("\t\tSECTOR:\t\t\t%d,%d\n", (*refGalaxy).enterprise.position[2], (*refGalaxy).enterprise.position[3]);
                 break;
             case 5:
-                printf("\tPHOTON TORPEDOES:\t%d\n", (*refGalaxy).enterprise.torpedoes);
+                printf("\t\tPHOTON TORPEDOES:\t%d\n", (*refGalaxy).enterprise.torpedoes);
                 break;
             case 6:
-                printf("\tTOTAL ENERGY:\t\t%d\n", (*refGalaxy).enterprise.energy + (*refGalaxy).enterprise.shields);
+                printf("\t\tTOTAL ENERGY:\t\t%d\n", (*refGalaxy).enterprise.energy + (*refGalaxy).enterprise.shields);
                 break;
             case 7:
-                printf("\tSHIELDS:\t\t\t%d\n", (*refGalaxy).enterprise.shields);
+                printf("\t\tSHIELDS:\t\t%d\n", (*refGalaxy).enterprise.shields);
                 break;
             case 8:
-                printf("\tKLINGONS REMAINING:\t%d\n", (*refGalaxy).gVitals.numKlingons);
+                printf("\t\tKLINGONS REMAINING:\t%d\n", (*refGalaxy).klingonCount);
                 break;
             default:
                 break;
         }
     }
     printf("---------------------------------------------\n");
-
     return;
 }
 
@@ -630,11 +788,6 @@ void exeLRS(struct Galaxy* refGalaxy) {                                         
                 // Mark scanned quadrants as Explored
                 (*refGalaxy).enterprise.explored[w][x] = 1;
                 int starCounter = 0;
-                /*
-                int klingonCounter = 0;
-                int starbaseCounter = 0;
-                int starCounter = 0;
-                */
                 for (int y = 0; y < 8; y++) {
                     for (int z = 0; z < 8; z++) {
                         if ((*refGalaxy).coordinates[w][x][y][z] == '*') { starCounter++; }
@@ -650,7 +803,7 @@ void exeLRS(struct Galaxy* refGalaxy) {                                         
 }
 
 void exeSLR(struct Galaxy* refGalaxy) {                                             //
-    //struct Enterprise ePr = (*refGalaxy).enterprise;
+    struct Enterprise ePr = (*refGalaxy).enterprise;
     printf("LONG RANGE SCAN FOR ALL QUADRANTS:\n");
     printf("       1      2      3      4      5      6      7      8\n");
     printf("    --------------------------------------------------------    \n");
@@ -713,7 +866,7 @@ void exeDAM(struct Galaxy* refGalaxy) {
         // if any member in the array < 0, set it equal to 0 and decrement stardate counter
         if((*refGalaxy).enterprise.sysDamage[i] < 0) {
             (*refGalaxy).enterprise.sysDamage[i] = 0;
-            (*refGalaxy).gVitals.stardate--;
+            (*refGalaxy).stardate--;
         }
     }
     return;
@@ -765,9 +918,9 @@ void exeCOM(struct Galaxy* refGalaxy) {
             break;
         case ('1'):
             printf("\STATUS REPORT:\n");
-            printf("KLINGONS LEFT: %d\n", (*refGalaxy).gVitals.numKlingons);
-            printf("MISSION MUST BE COMPLETED IN %d STARDATES\n", (*refGalaxy).gVitals.stardate);
-            printf("THE FEDERATION IS MAINTAINING %d STARBASES IN THE GALAXY\n", (*refGalaxy).gVitals.numStarbases);
+            printf("KLINGONS LEFT: %d\n", (*refGalaxy).klingonCount);
+            printf("MISSION MUST BE COMPLETED IN %d STARDATES\n", (*refGalaxy).stardate);
+            printf("THE FEDERATION IS MAINTAINING %d STARBASES IN THE GALAXY\n", (*refGalaxy).starbaseCount);
             printf("\nDEVICE           STATE OF REPAIR\n");
             printf("WARP ENGINES         %d\n", (*refGalaxy).enterprise.sysDamage[0]);
             printf("SHORT RANGE SENSORS  %d\n", (*refGalaxy).enterprise.sysDamage[1]);
@@ -1053,20 +1206,26 @@ void exeDBG(struct Galaxy* refGalaxy) {                                         
     printf("  +OV: OVERPOWER ALL SYSTEMS\n");
     printf("  +LR: SUPER-LONG-RANGE SENSORS\n\n");
     printf("GAME VITALS STATUS:\n");
-    printf("  STARBASES REMAINING:\t%d\n", (*refGalaxy).gVitals.numStarbases);
-    printf("  KLINGONS REMAINING:\t%d\n", (*refGalaxy).gVitals.numKlingons);
+    printf("  STARBASES REMAINING:\t%d\n", (*refGalaxy).starbaseCount);
+    printf("  KLINGONS REMAINING:\t%d\n", (*refGalaxy).klingonCount);
     printf("  KLINGONS IN QUADRANT:\t%d\n", KlingonsInQuadrant(refGalaxy,(*refGalaxy).enterprise.position));
-    printf("  STARDATE\t\t%.1f\n", (*refGalaxy).gVitals.stardate);
+    printf("  STARDATE\t\t%.1f\n", (*refGalaxy).stardate);
     printf("  USER HAS QUIT:\t");
-    if ((*refGalaxy).gVitals.userQuit) { printf("TRUE\n\n");
+    if ((*refGalaxy).enterprise.userQuit) { printf("TRUE\n\n");
     } else { printf("FALSE\n\n"); }
     printf("\nENTERPRISE STATUS:\n");
     printf("  POSITION-\n    QUADRANT:\t\t(%d,%d)\n    SECTOR:\t\t(%d,%d)\n", (*refGalaxy).enterprise.position[0], (*refGalaxy).enterprise.position[1], (*refGalaxy).enterprise.position[2], (*refGalaxy).enterprise.position[3]);
-    printf("  ENERGY:\t\t%d\n", (*refGalaxy).enterprise.energy);
+    printf("  ENERGY:\t\t%d (%d FREE)\n", getTotalEnergy(&((*refGalaxy).enterprise)), (*refGalaxy).enterprise.energy);
     printf("  SHIELDS:\t\t%d\n", (*refGalaxy).enterprise.shields);
     printf("  TORPEDOES:\t\t%4d\n\n", (*refGalaxy).enterprise.torpedoes);
     printf("\n");
     return;
+}
+
+int getTotalEnergy(struct Enterprise* refEnt) {
+    int E = (*refEnt).energy;
+    int S = (*refEnt).shields;
+    return (E + S);
 }
 
 int setDest(int* _start, double dir, double dist, int* _destination) {         // Using starting coordinates, direction (NAV number), and distance, it sets destination coordinates accordingly
@@ -1231,8 +1390,6 @@ void KlingonsFire(struct Galaxy* refGalaxy) {                                   
             (*ePr).shields -= kAtk;
             if ((*ePr).shields <= 0) {
                 (*ePr).isDestroyed = true;
-                printf("THE ENTERPRISE HAS BEEN DESTROYED. THE FEDERATION WILL BE CONQUERED\n"); //TODO: move destroed text to gameEnd()
-                printf("THERE WERE %d KLINGON BATTLE CRUISERS LEFT AT THE END OF YOUR MISSION.", (*refGalaxy).gVitals.numKlingons);
                 return;
             }
             printf("\t<SHIELDS DOWN TO %d UNITS>\n", (*ePr).shields);
@@ -1274,7 +1431,7 @@ void KlingonsMove(struct Galaxy* refGalaxy) {                                   
                 }
             }
             (*thisK).position[2] = Y;
-            (*thisK).position[3] = Z;                                                           printf("KLINGON MOVED TO: %d,%d\n\n", Y, Z); //DEBUG
+            (*thisK).position[3] = Z;                                                           //printf("KLINGON MOVED TO: %d,%d\n\n", Y, Z); //DEBUG
         }
     }
     return;
@@ -1314,7 +1471,7 @@ struct Klingon* getNthClosestKlingon(struct Galaxy* refGalaxy, int n) {         
     return &((*refGalaxy).klingons[(int)distIs[n-1][1]]);                                       // return the pointer to the klingon that matches the specified precedence
 }
 
-//TODO: IMPLEMENT REPAIRING IN STARBASES?
+//TODO: IMPLEMENT STARBASE DOCKING
 
 int StarbasesInQuadrant(struct Galaxy* refGalaxy, int* Q) {                         // checks enterprise's current quadrant and returns number of intact starbases within
     int SBCount = 0;
@@ -1336,15 +1493,32 @@ int KlingonsInQuadrant(struct Galaxy* refGalaxy, int* Q) {                      
     return KlingonCount;
 }
 
+bool checkIfDocked(struct Galaxy* refGalaxy) {
+    struct Enterprise* ePr = &((*refGalaxy).enterprise);
+    for (int i=0; i<GAME_NUM_STARBASES; i++) {
+        struct Starbase* thisSB = &((*refGalaxy).starbases[i]);
+    }
+}
+
+bool checkIfEmpty(struct Galaxy* refGalaxy, int* coords) {
+    int W = coords[0];
+    int X = coords[1];
+    int Y = coords[2];
+    int Z = coords[3];
+    if ((*refGalaxy).coordinates[W][X][Y][Z] == ' ') { return true; }
+}
+
 void updateCondition(struct Galaxy* refGalaxy) {                                    // updates the enterprise's alert condition based on enemy proximity and ship status
     if (KlingonsInQuadrant(refGalaxy,(*refGalaxy).enterprise.position) > 0) {
         (*refGalaxy).enterprise.condition = RED;
-    } else if ((*refGalaxy).gVitals.eEnergy < round(GAME_ENERGY_MAX * 0.1)) {
+    } else if (getTotalEnergy(&((*refGalaxy).enterprise)) < round(GAME_ENERGY_MAX * 0.1)) {
         (*refGalaxy).enterprise.condition = YELLOW;
     } else {
         (*refGalaxy).enterprise.condition = GREEN;
     }
 }
+
+
 
 double maxnum(double a, double b) { if (a >= b) { return a; } else { return b; } }  // returns the larger of the two parameters
 
@@ -1378,10 +1552,11 @@ void remNL(char* string, int n) {                                               
     return;
 }
 
-void strToLower(char* string, int n) {                                              // Loops through string parameter, changing each index to its lowercase version
-    for (int i=0; i<n; i++) { string[i] = tolower(string[i]); }
-    return;
-}
+//TODO: delete strToLower
+//void strToLower(char* string, int n) {                                              // Loops through string parameter, changing each index to its lowercase version
+//    for (int i=0; i<n; i++) { string[i] = tolower(string[i]); }
+//    return;
+//}
 
 void strToUpper(char* string, int n) {                                              // Loops through string parameter, changing each index to its uppercase version
     for (int i=0; i<n; i++) { string[i] = toupper(string[i]); }
