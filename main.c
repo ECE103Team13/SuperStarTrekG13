@@ -52,7 +52,6 @@ struct Galaxy {
   struct Klingon klingons[GAME_NUM_KLINGONS];
   int klingonCount;
   struct Enterprise enterprise;
-
   bool glblDEBUG;                                                               // global debug variable which enables non-game debug options; triggered by giving DBG command
 };
 
@@ -510,7 +509,7 @@ void exeSRS(struct Galaxy* refGalaxy) {
     int w = (*refGalaxy).enterprise.position[0];
     int x = (*refGalaxy).enterprise.position[1];
     int column = 0;
-    char debris[16] = {"`~^-_=:;\"\',.\\/%%"}; //%15 to reference
+    char debris[13] = {"`~^-=:;\"\',.?"};                                        // string which can be referenced randomly by using [rand()%12]
 
     char quadrantStr[8][38];
     for (int i=0; i<8; i++) {
@@ -518,8 +517,8 @@ void exeSRS(struct Galaxy* refGalaxy) {
             if (((j+2)%4 == 0) && ((j+2)/4 <= 8)) {
                 quadrantStr[i][j] = ((*refGalaxy).coordinates[w][x][i+1][(int)floor((j+2)/4.0)]);
             } else if (quadrantStr[i][j-1] == 'x') {                                // if wreck marker found, surround it with random "debris" characters
-                quadrantStr[i][j] = debris[rand()%15];
-                quadrantStr[i][j-2] = debris[rand()%15];
+                quadrantStr[i][j] = debris[rand()%12];
+                quadrantStr[i][j-2] = debris[rand()%12];
             } else {
                 quadrantStr[i][j] = ' ';
             }
@@ -558,7 +557,7 @@ void exeSRS(struct Galaxy* refGalaxy) {
         switch(y) {
             char cond[10];
             case 1:                                                             // print additional SRS readout info, according to current line
-                printf("\t\tSTARDATE:\t\t%.1f\n", ((*refGalaxy).stardate));
+                printf("\tSTARDATE:\t\t%.1f\n", ((*refGalaxy).stardate));
                 break;
             case 2:
                 if ((*refGalaxy).enterprise.condition == DOCKED)        { strcpy(cond,"DOCKED");    }
@@ -1423,6 +1422,8 @@ void displayManual() {                                                          
     printf("\t<E>\tEnterprise\t\t>!<\tStarbase\n\t+K+\tKlingon\t\t\t*\tStar\n\n");
     printf("4. You have eight commands available to you. (A detailed description of each command is given in the program instructions.)\n\n");
     printf("\tNAV\tNavigate the Starship by setting course and warp engine speed.\n\tSRS\tShort-range sensor scan (one quadrant)\n\tLRS\tLong-range sensor scan (9 quadrants)\n\tPHA\tPhaser control (energy gun)\n\tTOR\tPhoton torpedo control\n\tSHE\tShield control (protects against phaser fire)\n\tDAM\tDamage and state-of-repair report\n\tCOM\tCall library computer\n\n");
+    printf("(Press Enter to continue...)\n");
+    getchar();
     printf("When setting a course with the NAV command, direction is indicated by a floating point number from 1.0 to 9.0, according to the following convention:\n");
     printf("\t  4  3  2\n");
     printf("\t   \\ | / \n");
@@ -1440,6 +1441,8 @@ void displayManual() {                                                          
     printf("8. Firing and damage notes:\n\n\tA. Phaser fire diminishes with increased distance between combatants.\n\tB. If a Klingon zaps you hard enough (relative to your shield strength) he will generally cause damage to some part of your ship with an appropriate ''Damage Control'' report resulting.\n\tC. If you don't zap a Klingon hard enough (relative to his shield strength) you won't damage him at all. Your sensors will tell the story.\n\tD. Damage control will let you know when out-of-commission devices have been completely repaired.\n\n");
     printf("9. Your engines will automatically shut down if you should attempt to leave the galaxy, or if you should try to maneuver through a star, a Starbase, or - heaven help you - a Klingon warship.\n\n");
     printf("10. In a pinch, or if you should miscalculate slightly, some shield control energy will be automatically diverted to warp engine control (if your shields are operational!).\n\n");
+    printf("(Press Enter to continue...)\n");
+    getchar();
     printf("11. While you're docked at a Starbase, a team of technicians can repair your ship (if you're willing for the to spend the time required - and the repairmen always underestimate...)\n\n");
     printf("12. If, to save maneuvering time toward the end of the gane, you should cold-bloodedly destroy a Starbase, you get a nasty note from Starfleet Command. If you destroy your last Starbase, you lose the game!\n\n");
     printf("13. End game logic has been ''cleaned up'' in several spots, and it is possible to get a new command after successfully completing your mission (or, after resigning your old one).\n\n\n");
