@@ -285,7 +285,6 @@ struct Galaxy gameIntro(void) {                                                 
   printf("                          '----------------'\n\n");
   printf("                    THE USS ENTERPRISE --- NCC-1701\n\n");
   printf("\t\t(PRESS ENTER TO BEGIN GAME)\n");
-  //printf("ENTER 'M' TO VIEW THE GAME MANUAL BEFORE STARTING GAME\nOTHERWISE, PRESS ENTER TO BEGIN GAME\n"); //TODO: DELETE?
 
     char input[MAX_INPUT_LENGTH];
     fgets(input, MAX_INPUT_LENGTH, stdin);
@@ -348,8 +347,7 @@ bool gameEnd(struct Galaxy *refGalaxy) {
         if((strcmp(getInput, "AYE") == 0) || (strcmp(getInput, "Aye") == 0)|| (strcmp(getInput, "aye") == 0)) {
             (*refGalaxy).enterprise.userQuit = false;
             struct Galaxy newGalaxy = gameIntro();
-            free(refGalaxy);
-            refGalaxy = &(newGalaxy);
+            (*refGalaxy) = newGalaxy;
             return true;
         } else {
             printf("\nGame ended\n");
@@ -375,39 +373,7 @@ void getCommand(struct Galaxy *refGalaxy) {
     } else if (strcmp(cmdString, "PHA") == 0) { exePHA(refGalaxy);
     } else if (strcmp(cmdString, "TOR") == 0) { exeTOR(refGalaxy);
     } else if (strcmp(cmdString, "SHE") == 0) { exeSHE(refGalaxy);
-    //} else if (strcmp(cmdString, "MAN") == 0) { displayManual(); //TODO: DELETE?
     } else if (strcmp(cmdString, "XXX") == 0) { (*refGalaxy).enterprise.userQuit = true;       // If user chooses resign, trigger the 'userQuit' gameVital
-    /*} else if (strcmp(cmdString, "DBG") == 0) { exeDBG(refGalaxy);                             // DEBUG: 'DBG' == a "secret" debug option showing game data and enabling '+' commands below:
-    } else if ((strcmp(cmdString, "+LR") == 0)&&((*refGalaxy).glblDEBUG)) { exeSLR(refGalaxy); // DEBUG: '+LR' == hidden "super long range" sensors: calls LRS for all quadrants
-    } else if ((strcmp(cmdString, "+EN") == 0)&&((*refGalaxy).glblDEBUG)) {
-        (*refGalaxy).enterprise.energy += 1000;
-        printf("ENTERPRISE ENERGY INCREASED BY 1000 UNITS.\n");
-        printf("ENERGY LEVELS NOW AT %d UNITS.\n\n", (*refGalaxy).enterprise.energy);
-    } else if ((strcmp(cmdString, "+TP") == 0)&&((*refGalaxy).glblDEBUG)) {
-        (*refGalaxy).enterprise.torpedoes += 10;
-        printf("10 TORPEDOES ADDED TO ENTERPRISE INVENTORY.\n");
-        printf("%d TORPEDOES TOTAL NOW CARRIED.\n\n", (*refGalaxy).enterprise.torpedoes);
-    } else if ((strcmp(cmdString, "+RP") == 0)&&((*refGalaxy).glblDEBUG)) {
-        (*refGalaxy).enterprise.sysDamage[0] = 1.0;
-        (*refGalaxy).enterprise.sysDamage[1] = 1.0;
-        (*refGalaxy).enterprise.sysDamage[2] = 1.0;
-        (*refGalaxy).enterprise.sysDamage[3] = 1.0;
-        (*refGalaxy).enterprise.sysDamage[4] = 1.0;
-        (*refGalaxy).enterprise.sysDamage[5] = 1.0;
-        (*refGalaxy).enterprise.sysDamage[6] = 1.0;
-        (*refGalaxy).enterprise.sysDamage[7] = 1.0;
-        printf("ALL ENTERPRISE SYSTEMS RESTORED TO FULL POWER.\n\n");
-    } else if ((strcmp(cmdString, "+OV") == 0)&&((*refGalaxy).glblDEBUG)) {
-        (*refGalaxy).enterprise.sysDamage[0] += 2.0;
-        (*refGalaxy).enterprise.sysDamage[1] += 2.0;
-        (*refGalaxy).enterprise.sysDamage[2] += 2.0;
-        (*refGalaxy).enterprise.sysDamage[3] += 2.0;
-        (*refGalaxy).enterprise.sysDamage[4] += 2.0;
-        (*refGalaxy).enterprise.sysDamage[5] += 2.0;
-        (*refGalaxy).enterprise.sysDamage[6] += 2.0;
-        (*refGalaxy).enterprise.sysDamage[7] += 2.0;
-        printf("POWER TO ALL ENTERPRISE SYSTEMS INCREASED ABOVE NORMAL.\n\n");
-        */ //TODO: DELETE?
     } else { exeHLP(refGalaxy); }                                               // If no other command recognized, print help menu
 }
 
@@ -1407,36 +1373,3 @@ void strToUpper(char* string, int n) {                                          
 }
 
 double RND1() { return (rand()%1000)/((double)1000.0); }                        // returns random floating point number between 0 and 1 (as is used in BASIC source)
-
-/*
-void displayManual() {                                                          // displays game manual, then immediately returns
-    printf("\n\n1. You are the captain of the starship ''Enterprise'' with a mission to seek and destroy a fleet of Klingon warships (usually about 17) which are menacing the United Federation of Planets. You have a specified number of stardates in which to complete your mission. You also have two or three Federation Starbases for resupplying your ship.\n\n");
-    printf("2. You will be assigned a starting position somewhere in the galaxy. The galaxy is divided into an 8 x 8 quadrant grid. The astronomical name of a quadrant is called out upon entry into a new region. (See ''Quadrant Nomenclature.'') Each quadrant is further divided into an 8 x 8 section grid.\n\n");
-    printf("3. On a section diagram, the following symbols are used:\n\n");
-    printf("\t<E>\tEnterprise\t\t>!<\tStarbase\n\t+K+\tKlingon\t\t\t*\tStar\n\n");
-    printf("4. You have eight commands available to you. (A detailed description of each command is given in the program instructions.)\n\n");
-    printf("\tNAV\tNavigate the Starship by setting course and warp engine speed.\n\tSRS\tShort-range sensor scan (one quadrant)\n\tLRS\tLong-range sensor scan (9 quadrants)\n\tPHA\tPhaser control (energy gun)\n\tTOR\tPhoton torpedo control\n\tSHE\tShield control (protects against phaser fire)\n\tDAM\tDamage and state-of-repair report\n\tCOM\tCall library computer\n\n");
-    printf("When setting a course with the NAV command, direction is indicated by a floating point number from 1.0 to 9.0, according to the following convention:\n");
-    printf("\t  4  3  2\n");
-    printf("\t   \\ | / \n");
-    printf("\t    \\|/  \n");
-    printf("\t  5--*--1\n");
-    printf("\t    /|\\  \n");
-    printf("\t   / | \\ \n");
-    printf("\t  6  7  8\n");
-    printf("\t(1.0 == 9.0)\n");
-    printf("Non-whole numbers interpolate between directions. E.g. '1.5' would direct halfway between the 1.0 and 2.0 directions.(1.0 == 9.0)\n");
-    printf("5. Library computer options are as follows (more complete descriptions are in program instructions):\n\n");
-    printf("\t0\tCumulative galactic record\n\t1\tStatus report\n\t2\tPhoton torpedo course data\n\t3\tStarbase navigation data\n\t4\tDirection/distance calculator\n\t5\tQuadrant nomenclature map\n\n");
-    printf("6. Certain reports on the ship's status are made by officers of the Enterprise who appeared on the original TV show - Spock, Scott, Uhura, Chekov, etc.\n\n");
-    printf("7. Klingons are non-stationary within their quadrants. If you try to maneuver on then, they will move and fire on you.\n\n");
-    printf("8. Firing and damage notes:\n\n\tA. Phaser fire diminishes with increased distance between combatants.\n\tB. If a Klingon zaps you hard enough (relative to your shield strength) he will generally cause damage to some part of your ship with an appropriate ''Damage Control'' report resulting.\n\tC. If you don't zap a Klingon hard enough (relative to his shield strength) you won't damage him at all. Your sensors will tell the story.\n\tD. Damage control will let you know when out-of-commission devices have been completely repaired.\n\n");
-    printf("9. Your engines will automatically shut down if you should attempt to leave the galaxy, or if you should try to maneuver through a star, a Starbase, or - heaven help you - a Klingon warship.\n\n");
-    printf("10. In a pinch, or if you should miscalculate slightly, some shield control energy will be automatically diverted to warp engine control (if your shields are operational!).\n\n");
-    printf("11. While you're docked at a Starbase, a team of technicians can repair your ship (if you're willing for the to spend the time required - and the repairmen always underestimate...)\n\n");
-    printf("12. If, to save maneuvering time toward the end of the gane, you should cold-bloodedly destroy a Starbase, you get a nasty note from Starfleet Command. If you destroy your last Starbase, you lose the game!\n\n");
-    printf("13. End game logic has been ''cleaned up'' in several spots, and it is possible to get a new command after successfully completing your mission (or, after resigning your old one).\n\n\n");
-    printf("\t(Enter game command 'MAN' at any time to see this manual again)\n\n");
-    return;
-}
-*/ //TODO: DELETE?
