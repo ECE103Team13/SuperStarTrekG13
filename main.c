@@ -52,6 +52,7 @@ struct Galaxy {
   struct Klingon klingons[GAME_NUM_KLINGONS];
   int klingonCount;
   struct Enterprise enterprise;
+
   bool glblDEBUG;                                                               // global debug variable which enables non-game debug options; triggered by giving DBG command
 };
 
@@ -347,8 +348,7 @@ bool gameEnd(struct Galaxy *refGalaxy) {
         if((strcmp(getInput, "AYE") == 0) || (strcmp(getInput, "Aye") == 0)|| (strcmp(getInput, "aye") == 0)) {
             (*refGalaxy).enterprise.userQuit = false;
             struct Galaxy newGalaxy = gameIntro();
-            free(refGalaxy);
-            refGalaxy = &(newGalaxy);
+            (*refGalaxy) = newGalaxy;
             return true;
         } else {
             printf("\nGame ended\n");
@@ -510,12 +510,16 @@ void exeSRS(struct Galaxy* refGalaxy) {
     int w = (*refGalaxy).enterprise.position[0];
     int x = (*refGalaxy).enterprise.position[1];
     int column = 0;
+    char debris[16] = {"`~^-_=:;\"\',.\\/%%"}; //%15 to reference
 
     char quadrantStr[8][38];
     for (int i=0; i<8; i++) {
         for (int j=0; j<38; j++) {
             if (((j+2)%4 == 0) && ((j+2)/4 <= 8)) {
                 quadrantStr[i][j] = ((*refGalaxy).coordinates[w][x][i+1][(int)floor((j+2)/4.0)]);
+            } else if (quadrantStr[i][j-1] == 'x') {                                // if wreck marker found, surround it with random "debris" characters
+                quadrantStr[i][j] = debris[rand()%15];
+                quadrantStr[i][j-2] = debris[rand()%15];
             } else {
                 quadrantStr[i][j] = ' ';
             }
@@ -859,6 +863,8 @@ void exePHA(struct Galaxy* refGalaxy) {
                 printf("%d UNIT HIT ON KLINGON AT SECTOR %d,%d\n", thisDmg, (*thisK).position[2], (*thisK).position[3]);
                 if ((*thisK).energy <= 0) {
                     printf("*** KLINGON DESTROYED ***\n");
+                    // add wreck marker to galaxy:
+                    (*refGalaxy).coordinates[(*thisK).position[0]][(*thisK).position[1]][(*thisK).position[2]][(*thisK).position[3]] = 'x';
                 } else {
                 }
 
@@ -1010,6 +1016,8 @@ void exeTOR(struct Galaxy* refGalaxy) {
                     if (((*thisK).position[2] == torpedoPos[0]) && ((*thisK).position[3] == torpedoPos[1])) {
                         (*thisK).energy = -1000;
                         printf("*** KLINGON DESTROYED ***\n");
+                        // add wreck marker to galaxy:
+                        (*refGalaxy).coordinates[(*thisK).position[0]][(*thisK).position[1]][(*thisK).position[2]][(*thisK).position[3]] = 'x';
                         if (KlingonsInQuadrant(refGalaxy, (*ePr).position)) {
                           KlingonsFire(refGalaxy);
                           KlingonsMove(refGalaxy);
@@ -1022,6 +1030,8 @@ void exeTOR(struct Galaxy* refGalaxy) {
                 if (((*thisB).position[2] == torpedoPos[0]) && ((*thisB).position[3] == torpedoPos[1])) {
                     (*thisB).energy = -1000;
                     printf("*** STARBASE DESTROYED ***\n");
+                    // add wreck marker to galaxy:
+                    (*refGalaxy).coordinates[(*thisB).position[0]][(*thisB).position[1]][(*thisB).position[2]][(*thisB).position[3]] = 'x';
                     (*refGalaxy).starbasesDestroyed++;
                     if ((*refGalaxy).starbasesDestroyed > 1) {
                         printf("THAT DOES IT, CAPTAIN!! YOU ARE HEREBY RELIEVED OF COMMAND AND SENTENCED TO\n99 STARDATES AT HARD LABOR ON CYGNUS 12!!\n\n");
@@ -1248,7 +1258,7 @@ void KlingonsMove(struct Galaxy* refGalaxy) {                                   
             while (!foundSpot) {
                 Y = (int)ceil(RND1()*8.0);
                 Z = (int)ceil(RND1()*8.0);
-                if ((*refGalaxy).coordinates[W][X][Y][Z] == ' ') {
+                if ((*refGalaxy).coordinates[W][X][Y][Z] != '*') {
                     foundSpot = true;
                     for (int j=0; j<GAME_NUM_KLINGONS; j++) {
                         if (((*refGalaxy).klingons[j].position[0] == W) &&
